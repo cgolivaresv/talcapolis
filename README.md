@@ -30,7 +30,7 @@ La lógica está en `src/engine/economy.ts`.
 - **Barrios:** 8 barrios con color; quien reúna todos los lotes de un barrio lo obtiene (arriendo ×2). Con los 4 sitios de una manzana, el arriendo es ×1,5. Cada barrio se define por un lugar real de Talca; sus límites son aproximados (no hay límites oficiales).
 - **Casillas "?":** 10 intersecciones naranjas que sacan una tarjeta con una acción (cobrar, pagar, avanzar a un edificio, ir a la cárcel, etc.). El mazo es determinista por semilla.
 
-Las distancias entre calles son las **reales** (cuadras de ~125 m; entre 9 y 10 Oriente la cuadra es más larga, ~208 m). Se midieron sobre las intersecciones de OpenStreetMap y están en `src/engine/geometry.ts`.
+En el tablero todas las cuadras miden lo mismo (se dejaron de lado las proporciones reales para aprovechar el espacio). Las distancias reales entre calles, medidas sobre las intersecciones de OpenStreetMap, siguen en `src/engine/geometry.ts` y se usan para ubicar cada edificio dentro de su cuadra.
 
 Datos de mapa © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright), licencia ODbL.
 

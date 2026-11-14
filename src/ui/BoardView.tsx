@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { lerpPositionM, type Board, type Intersection, type Segment } from '../engine/board';
+import { type Board, type Intersection, type Segment } from '../engine/board';
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
 import type { Lot, Side } from '../engine/lots';
 import { directionOf } from '../engine/traffic';
@@ -30,7 +30,8 @@ function GlyphImage({ glyph, x, y, size }: { glyph: Glyph; x: number; y: number;
   return <image href={GLYPH_URL[glyph]} x={x} y={y} width={size} height={size} pointerEvents="none" />;
 }
 
-const K = 1.1; // píxeles por metro real (las calles intermedias están a ~65 m)
+/** Separación entre calles consecutivas: todas las cuadras miden lo mismo (no se respetan las distancias reales). */
+const SPACING = 124;
 const LEFT = 136;
 const TOP = 70;
 const TILE = 26; // grosor de la ficha
@@ -72,12 +73,11 @@ export const MIRROR_COLUMNS = true;
 export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, ownerColors = {}, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
-  // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
-  // sx recibe el índice de una calle Oriente/Poniente y sy el de una calle Norte/Sur (pueden ser fraccionarios).
-  const vTotal = lerpPositionM(board.verticalStreets, rows - 1);
-  const sx = (v: number) => LEFT + K * (MIRROR_COLUMNS ? vTotal - lerpPositionM(board.verticalStreets, v) : lerpPositionM(board.verticalStreets, v));
-  const sy = (h: number) => TOP + K * lerpPositionM(board.horizontalStreets, h);
-  const width = LEFT + K * vTotal + 70;
+  // Calles equiespaciadas. sx recibe el índice de una calle Oriente/Poniente y sy el de una calle
+  // Norte/Sur (pueden ser fraccionarios, para ubicar edificios entre dos calles).
+  const sx = (v: number) => LEFT + SPACING * (MIRROR_COLUMNS ? rows - 1 - v : v);
+  const sy = (h: number) => TOP + SPACING * h;
+  const width = LEFT + SPACING * (rows - 1) + 70;
   const height = sy(cols - 1) + 70;
   const fullRows = board.verticalStreets.filter((s) => !s.spanM);
   const fullCols = board.horizontalStreets.filter((s) => !s.spanM);

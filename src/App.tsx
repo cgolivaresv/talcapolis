@@ -16,6 +16,7 @@ import {
 } from './engine/properties';
 import { directionOf } from './engine/traffic';
 import { BARRIO_COLORS, BoardView } from './ui/BoardView';
+import { EMBLEM_COLOR, STREET_COLOR, cardTheme } from './ui/colors';
 import { GLYPH_URL, glyphOfLot } from './ui/glyphs';
 import { TradePanel } from './ui/TradePanel';
 import './App.css';
@@ -95,6 +96,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
     const barrio = lot ? BARRIOS[lot.barrio] : null;
   const barrioLots = lot ? lotsOfBarrio(lots, lot.barrio) : [];
   const manzanaLots = lot ? lotsOfManzana(lots, lot.manzanaId) : [];
+  const theme = lot ? cardTheme(lot.kind === 'emblematico' ? EMBLEM_COLOR : BARRIO_COLORS[lot.barrio]) : street ? cardTheme(STREET_COLOR) : undefined;
   const lm = lot?.landmarkId ? landmarks.find((l) => l.id === lot.landmarkId) : undefined;
 
   return (
@@ -216,7 +218,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
             </ol>
           </section>
 
-          <aside className="deed" aria-live="polite">
+          <aside className="deed" aria-live="polite" style={theme}>
             {lot && barrio ? (
               <>
                 <div className="deed-band">
@@ -228,7 +230,6 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                   </span>
                   <strong>{lot.kind === 'emblematico' ? lot.name : KIND_LABEL[lot.kind]}</strong>
                 </div>
-                <div className="deed-stripe" style={{ background: BARRIO_COLORS[lot.barrio] }} />
                 <p className="deed-between">{lot.kind === 'emblematico' ? lm?.where : lot.name.split(', ').slice(1).join(', ')}</p>
                 <p className="deed-between">Da a: <strong>{lot.frontStreetName}</strong></p>
                 <p className="deed-barrio">
@@ -264,7 +265,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
               </>
             ) : street ? (
               <>
-                <div className="deed-band street-band">
+                <div className="deed-band">
                   <span>CALLE · NO SE COMPRA</span>
                   <strong>{street.street.name}</strong>
                 </div>
