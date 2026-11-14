@@ -1,8 +1,18 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
 import { placeLandmarks, type PlacedLandmark } from './engine/landmarks';
 import { baseRentOf, priceOf } from './engine/pricing';
+import {
+  BUILDING_LEVEL_NAME,
+  LANDMARK_INFO,
+  LANDMARK_KIND_LABEL,
+  MAX_BUILDING_LEVEL,
+  buildCostOf,
+  landmarkPriceOf,
+  landmarkRentOf,
+  rentAtLevel,
+} from './engine/properties';
 import { BoardView, GROUP_COLORS } from './ui/BoardView';
 import './App.css';
 
@@ -27,7 +37,7 @@ export default function App() {
     <main className="app">
       <header className="banner">
         <h1>TALCAPOLIS</h1>
-        <p>{board.segments.length} calles en venta</p>
+        <p>{board.segments.length} calles y {landmarks.length} edificios emblemáticos en venta</p>
       </header>
 
       <div className="layout">
@@ -54,11 +64,19 @@ export default function App() {
           {selectedLandmark ? (
             <>
               <div className="deed-band landmark-band">
-                <span>EDIFICIO EMBLEMÁTICO</span>
+                <span>EDIFICIO EMBLEMÁTICO · {LANDMARK_KIND_LABEL[LANDMARK_INFO[selectedLandmark.id].kind].toUpperCase()}</span>
                 <span className="landmark-icon">{selectedLandmark.icon}</span>
                 <strong>{selectedLandmark.name}</strong>
               </div>
               <p className="deed-between">{selectedLandmark.where}</p>
+              <dl>
+                <dt>Precio</dt>
+                <dd>${landmarkPriceOf(selectedLandmark.id)}</dd>
+                <dt>Arriendo</dt>
+                <dd>${landmarkRentOf(selectedLandmark.id, 1)}</dd>
+                <dt>Con otro de la misma clase</dt>
+                <dd>${landmarkRentOf(selectedLandmark.id, 2)}</dd>
+              </dl>
             </>
           ) : selected ? (
             <>
@@ -72,6 +90,14 @@ export default function App() {
                 <dd>${priceOf(selected)}</dd>
                 <dt>Arriendo</dt>
                 <dd>${baseRentOf(selected)}</dd>
+                {Array.from({ length: MAX_BUILDING_LEVEL }, (_, i) => i + 1).map((level) => (
+                  <Fragment key={level}>
+                    <dt>{BUILDING_LEVEL_NAME[level]}</dt>
+                    <dd>${rentAtLevel(selected, level)}</dd>
+                  </Fragment>
+                ))}
+                <dt>Construir (c/u)</dt>
+                <dd>${buildCostOf(selected)}</dd>
               </dl>
             </>
           ) : (
