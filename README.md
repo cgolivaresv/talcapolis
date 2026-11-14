@@ -56,3 +56,7 @@ npm run build
 ## Intercambios
 
 Antes de tirar los dados, el jugador en turno puede proponer un intercambio a otro jugador: lotes y/o dinero a cambio de lotes y/o dinero. El otro jugador acepta o rechaza. Una oferta solo es válida si cada lote es de quien lo ofrece y si ambos tienen el dinero. No hay hipotecas.
+
+## Estilo gráfico
+
+Paleta y tipografías del set «Edición Arquitectónica Talca» (Esmeralda Mate `#144E3A`, Cobre Cepillado `#C68B66`, Crema Alabastro `#F5F1E8`, Pizarra Carbón `#222629`, Oro Champagne `#D4AF37`), con Montserrat (títulos) e Inter (texto), servidas desde el propio proyecto (`@fontsource`). Los 8 colores de barrio siguen los grupos de la guía de estilo. Los tokens están en `src/index.css` y los colores del tablero en `src/ui/BoardView.tsx`.

@@ -5,10 +5,10 @@
 }
 
 .banner {
-  background: #c4161c;
-  color: #fff;
+  background: #222629;
+  color: #f5f1e8;
   text-align: center;
-  border: 4px solid #111;
+  border: 3px solid #c68b66;
   border-radius: 6px;
   padding: 8px 12px;
   margin-bottom: 16px;
@@ -16,16 +16,19 @@
 
 .banner h1 {
   margin: 0;
-  font-family: Impact, 'Arial Black', sans-serif;
-  letter-spacing: 6px;
-  font-size: 2.4rem;
-  text-shadow: 3px 3px 0 #111;
+  font-family: var(--font-title);
+  font-weight: 800;
+  letter-spacing: 8px;
+  font-size: 2.2rem;
+  color: #f5f1e8;
+  text-shadow: 2px 2px 0 #c68b66;
 }
 
 .banner p {
   margin: 0;
   font-size: 0.85rem;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
+  color: #c68b66;
   text-transform: uppercase;
 }
 
@@ -57,9 +60,9 @@
   height: 36px;
   font-size: 1.3rem;
   font-weight: 700;
-  border: 2px solid #111;
+  border: 2px solid #222629;
   border-radius: 6px;
-  background: #fef200;
+  background: #d4af37;
   cursor: pointer;
 }
 
@@ -80,14 +83,14 @@
 }
 
 .axis-label {
-  font: 700 10px 'Arial Narrow', Arial, sans-serif;
-  fill: #1a3a24;
+  font: 600 9.5px var(--font-body);
+  fill: #144e3a;
   text-transform: uppercase;
 }
 
 .corner-text {
-  font: 900 8px Arial, sans-serif;
-  fill: #111;
+  font: 800 7.5px var(--font-title);
+  fill: #222629;
 }
 
 .tile {
@@ -102,21 +105,21 @@
   position: sticky;
   top: 16px;
   width: 240px;
-  background: #fbf7e8;
-  border: 2px solid #111;
-  box-shadow: 4px 4px 0 #111;
+  background: #f5f1e8;
+  border: 2px solid #222629;
+  box-shadow: 4px 4px 0 #222629;
   padding: 10px;
-  color: #111;
+  color: #222629;
   text-align: center;
 }
 
 .deed-band {
-  border: 2px solid #111;
+  border: 2px solid #222629;
   padding: 10px 6px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  color: #111;
+  color: #222629;
   text-shadow: 0 0 3px #fff;
 }
 
@@ -126,7 +129,8 @@
 }
 
 .deed-band strong {
-  font-family: 'Arial Black', Arial, sans-serif;
+  font-family: var(--font-title);
+  font-weight: 800;
   font-size: 1.2rem;
   text-transform: uppercase;
 }
@@ -159,7 +163,7 @@
   font-weight: 400;
   font-size: 7.5px;
   text-transform: none;
-  fill: #3b5a45;
+  fill: #4d6a5c;
 }
 
 .icon-text {
@@ -179,7 +183,7 @@
 }
 
 .landmark-band {
-  background: #fef200;
+  background: #d4af37;
 }
 
 .deed-band .landmark-icon {
@@ -215,13 +219,13 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 1.5px solid #111;
+  border: 1.5px solid #222629;
   vertical-align: -2px;
   margin-right: 6px;
 }
 
 .street-band {
-  background: #e6e0cc;
+  background: #3a4246;
 }
 
 .lot {
@@ -239,11 +243,11 @@
 
 .barrios {
   width: 240px;
-  background: #fbf7e8;
-  border: 2px solid #111;
-  box-shadow: 4px 4px 0 #111;
+  background: #f5f1e8;
+  border: 2px solid #222629;
+  box-shadow: 4px 4px 0 #222629;
   padding: 10px;
-  color: #111;
+  color: #222629;
 }
 
 .barrios h2 {
@@ -273,26 +277,27 @@
 }
 
 .card-square:hover rect {
-  fill: #ffb04a;
+  fill: #d9a582;
 }
 
 .card-mark {
-  font: 900 24px Arial, sans-serif;
+  font: 800 24px var(--font-title);
   fill: #fff;
-  stroke: #111;
+  stroke: #222629;
   stroke-width: 1px;
   paint-order: stroke;
 }
 
 .card-band {
-  background: #f7941d;
+  background: #c68b66;
 }
 
 .deed-band .card-q {
-  font-family: 'Arial Black', Arial, sans-serif;
+  font-family: var(--font-title);
+  font-weight: 800;
   font-size: 2.6rem;
   color: #fff;
-  text-shadow: 2px 2px 0 #111;
+  text-shadow: 2px 2px 0 #222629;
 }
 
 .player-row {
@@ -307,11 +312,11 @@
 
 .turn {
   width: 240px;
-  background: #fbf7e8;
-  border: 2px solid #111;
-  box-shadow: 4px 4px 0 #111;
+  background: #f5f1e8;
+  border: 2px solid #222629;
+  box-shadow: 4px 4px 0 #222629;
   padding: 10px;
-  color: #111;
+  color: #222629;
 }
 
 .turn h2 {
@@ -322,15 +327,15 @@
 .roll-btn {
   width: 100%;
   padding: 10px;
-  font: 900 1rem 'Arial Black', Arial, sans-serif;
-  background: #fef200;
-  border: 2px solid #111;
+  font: 800 1rem var(--font-title);
+  background: #d4af37;
+  border: 2px solid #222629;
   border-radius: 6px;
   cursor: pointer;
 }
 
 .roll-btn:hover {
-  background: #ffe000;
+  background: #e2c14f;
 }
 
 .dice {
@@ -346,7 +351,7 @@
   display: grid;
   place-items: center;
   background: #fff;
-  border: 2px solid #111;
+  border: 2px solid #222629;
   border-radius: 7px;
   font: 900 1.2rem Arial, sans-serif;
 }
@@ -371,7 +376,7 @@
 }
 
 .players li.active {
-  background: #fff1a8;
+  background: #ead9b0;
 }
 
 .log {
@@ -419,7 +424,7 @@
   font: 600 0.74rem Arial, sans-serif;
   text-align: left;
   background: #fff;
-  border: 1.5px solid #111;
+  border: 1.5px solid #222629;
   border-radius: 5px;
   cursor: pointer;
 }
@@ -429,12 +434,12 @@
 }
 
 .buy-btn:hover {
-  background: #fff1a8;
+  background: #ead9b0;
 }
 
 .skip-btn {
   justify-content: center;
-  background: #eee;
+  background: #e6dfcf;
 }
 
 .players small {
@@ -509,11 +514,11 @@
 .setup {
   max-width: 360px;
   margin: 0 auto;
-  background: #fbf7e8;
-  border: 2px solid #111;
-  box-shadow: 4px 4px 0 #111;
+  background: #f5f1e8;
+  border: 2px solid #222629;
+  box-shadow: 4px 4px 0 #222629;
   padding: 16px;
-  color: #111;
+  color: #222629;
   display: grid;
   gap: 12px;
 }
@@ -536,13 +541,13 @@
   height: 38px;
   font: 900 1rem Arial, sans-serif;
   background: #fff;
-  border: 2px solid #111;
+  border: 2px solid #222629;
   border-radius: 6px;
   cursor: pointer;
 }
 
 .setup-count button.on {
-  background: #fef200;
+  background: #d4af37;
 }
 
 .setup-names {
@@ -563,13 +568,13 @@
   flex: 1;
   padding: 6px;
   font: 1rem Arial, sans-serif;
-  border: 2px solid #111;
+  border: 2px solid #222629;
   border-radius: 4px;
 }
 
 .setup-error {
   margin: 0;
-  color: #c4161c;
+  color: #8e2a35;
   font-size: 0.85rem;
 }
 
@@ -577,8 +582,97 @@
   margin-bottom: 8px;
   padding: 4px 10px;
   font: 600 0.8rem Arial, sans-serif;
-  background: #eee;
-  border: 1.5px solid #111;
+  background: #e6dfcf;
+  border: 1.5px solid #222629;
   border-radius: 5px;
   cursor: pointer;
+}
+
+/* --- Tema Esmeralda y Cobre --- */
+.deed,
+.turn,
+.barrios,
+.setup {
+  border: 2px solid #c68b66;
+  box-shadow: 4px 4px 0 #0b2d21;
+  border-radius: 6px;
+}
+
+.deed-band {
+  background: #144e3a;
+  border: 2px solid #c68b66;
+  border-radius: 6px;
+  color: #f5f1e8;
+  text-shadow: none;
+}
+
+.deed-band span {
+  color: #c68b66;
+  letter-spacing: 3px;
+}
+
+.deed-band strong {
+  letter-spacing: 1px;
+}
+
+.deed-stripe {
+  height: 8px;
+  margin: 6px 0 0;
+  border: 1.5px solid #222629;
+  border-radius: 3px;
+}
+
+.deed-tag {
+  margin: 12px auto 0;
+  width: max-content;
+  padding: 4px 12px;
+  background: #222629;
+  color: #c68b66;
+  border-radius: 4px;
+  font: 600 0.62rem var(--font-title);
+  letter-spacing: 3px;
+}
+
+.deed dl {
+  border-top: 1.5px solid #c68b66;
+  padding-top: 8px;
+}
+
+.deed dd {
+  color: #144e3a;
+}
+
+.card-band {
+  background: #c68b66;
+  border-color: #144e3a;
+}
+
+.card-band span {
+  color: #144e3a;
+}
+
+.street-band {
+  background: #3a4246;
+}
+
+.barrios h2,
+.turn h2,
+.setup h2 {
+  font-family: var(--font-title);
+  color: #144e3a;
+}
+
+.roll-btn,
+.zoom-bar button,
+.setup-count button.on {
+  background: #d4af37;
+  border-color: #222629;
+}
+
+.roll-btn:hover {
+  background: #e2c14f;
+}
+
+.players li.active {
+  background: #ead9b0;
 }

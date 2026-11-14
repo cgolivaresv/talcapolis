@@ -4,17 +4,25 @@ import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
 import type { Lot, Side } from '../engine/lots';
 import { directionOf } from '../engine/traffic';
 
-/** Color de cada barrio (índice = id del barrio), como en el Monopoly clásico. */
+/** Color de cada barrio (índice = id del barrio), según los grupos de la guía de estilo Esmeralda y Cobre. */
 export const BARRIO_COLORS = [
-  '#955436', // café
-  '#aae0fa', // celeste
-  '#d93a96', // rosado
-  '#f7941d', // naranja
-  '#ed1b24', // rojo
-  '#fef200', // amarillo
-  '#1fb25a', // verde
-  '#0072bb', // azul
+  '#8a5a3c', // marrón / cobre oscuro
+  '#7fa8c4', // celeste / acero
+  '#d9a38f', // rosa / cobre claro
+  '#c8693a', // naranjo / terracota
+  '#8e2a35', // rojo / burdeos
+  '#d4af37', // amarillo / oro
+  '#1e7b5a', // verde esmeralda
+  '#1f3a6e', // azul profundo
 ] as const;
+
+/** Paleta base del tablero. */
+const INK = '#222629'; // pizarra carbón
+const COPPER = '#c68b66'; // cobre cepillado
+const CREAM = '#f5f1e8'; // crema alabastro
+const LANDMARK_FILL = '#eadfc4';
+const PLAZA_FILL = '#7fa592';
+const GOLD = '#d4af37'; // oro champagne
 
 const K = 1.1; // píxeles por metro real (las calles intermedias están a ~65 m)
 const LEFT = 136;
@@ -128,13 +136,13 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
       const oy = vertical ? 0 : 4.5;
       return (
         <g pointerEvents="none">
-          {arrow(cx - ox, cy - oy, ux, uy, len * 0.75, 6, '#8a8a8a')}
-          {arrow(cx + ox, cy + oy, -ux, -uy, len * 0.75, 6, '#8a8a8a')}
+          {arrow(cx - ox, cy - oy, ux, uy, len * 0.75, 6, '#7d8a86')}
+          {arrow(cx + ox, cy + oy, -ux, -uy, len * 0.75, 6, '#7d8a86')}
         </g>
       );
     }
     const s = dir === 'forward' ? 1 : -1;
-    return <g pointerEvents="none">{arrow(cx, cy, ux * s, uy * s, len, 11, '#111')}</g>;
+    return <g pointerEvents="none">{arrow(cx, cy, ux * s, uy * s, len, 11, INK)}</g>;
   };
 
   /** Texto del tooltip: "sentido único hacia 3 Oriente" / "doble sentido". */
@@ -155,8 +163,8 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
       style={{ width: width * zoom }}
       onClick={() => onSelect(null)}
     >
-      <rect x="4" y="4" width={width - 8} height={height - 8} rx="10" fill="#cde6d0" stroke="#111" strokeWidth="4" />
-      <rect x="12" y="12" width={width - 24} height={height - 24} rx="6" fill="none" stroke="#111" strokeWidth="1.5" />
+      <rect x="4" y="4" width={width - 8} height={height - 8} rx="10" fill="#dbe5da" stroke="#144e3a" strokeWidth="5" />
+      <rect x="12" y="12" width={width - 24} height={height - 24} rx="6" fill="none" stroke={COPPER} strokeWidth="2" />
 
       {/* Manzanas en venta: entre calles enteras consecutivas, con el color de su barrio.
           Las calles parciales (1½ Norte, etc.) cruzan por encima. */}
@@ -179,7 +187,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
           };
           return (
             <g key={`mz${ri}-${ci}`}>
-              <rect x={x} y={y} width={w} height={h} rx="3" fill="#f3f8ee" stroke="#111" strokeWidth="1" />
+              <rect x={x} y={y} width={w} height={h} rx="3" fill="#f5f1e8" stroke={INK} strokeWidth="1" />
               {sites.map((lot) => {
                 const sh = shape[lot.side];
                 const selected = lot.id === selectedLotId;
@@ -199,16 +207,16 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                     <title>{lot.name}</title>
                     <polygon
                       points={sh.pts}
-                      fill={lm?.id === 'plaza-de-armas' ? '#7ec27e' : lm ? '#fff6d6' : lot.kind === 'local' ? '#fdf1d4' : '#f3f8ee'}
-                      stroke="#111"
+                      fill={lm?.id === 'plaza-de-armas' ? PLAZA_FILL : lm ? LANDMARK_FILL : lot.kind === 'local' ? '#eadfc4' : '#f5f1e8'}
+                      stroke={INK}
                       strokeWidth="1"
                     />
                     <line x1={sh.edge[0]} y1={sh.edge[1]} x2={sh.edge[2]} y2={sh.edge[3]} stroke={BARRIO_COLORS[lot.barrio]} strokeWidth="7" />
                     {ownerColors[lot.id] && (
-                      <circle cx={ix} cy={iy - 9} r="5" fill={ownerColors[lot.id]} stroke="#111" strokeWidth="1.5" />
+                      <circle cx={ix} cy={iy - 9} r="5" fill={ownerColors[lot.id]} stroke={INK} strokeWidth="1.5" />
                     )}
                     <text x={ix} y={iy + 5} textAnchor="middle" className="icon-text lot-house">{icon}</text>
-                    {selected && <polygon points={sh.pts} fill="none" stroke="#c4161c" strokeWidth="3" />}
+                    {selected && <polygon points={sh.pts} fill="none" stroke={GOLD} strokeWidth="3.5" />}
                   </g>
                 );
               })}
@@ -249,10 +257,10 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             }}
           >
             <title>{`${seg.name} (${trafficLabel(seg)})`}</title>
-            <rect x={t.x} y={t.y} width={t.w} height={t.h} fill="#fbf7e8" stroke="#111" strokeWidth="1.5" />
+            <rect x={t.x} y={t.y} width={t.w} height={t.h} fill={CREAM} stroke={INK} strokeWidth="1.5" />
             {trafficMarker(seg, t)}
             {selected && (
-              <rect x={t.x - 2} y={t.y - 2} width={t.w + 4} height={t.h + 4} fill="none" stroke="#c4161c" strokeWidth="3" />
+              <rect x={t.x - 2} y={t.y - 2} width={t.w + 4} height={t.h + 4} fill="none" stroke={GOLD} strokeWidth="3.5" />
             )}
           </g>
         );
@@ -278,7 +286,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
               }}
             >
               <title>Tarjeta ?</title>
-              <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx="4" fill="#f7941d" stroke="#111" strokeWidth="2" />
+              <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx="4" fill="#c68b66" stroke={INK} strokeWidth="2" />
               <text x={cx} y={cy + 8} textAnchor="middle" className="card-mark">?</text>
             </g>
           );
@@ -291,12 +299,12 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             onClick={lm ? landmarkClick(lm) : undefined}
           >
             {lm && <title>{lm.name}</title>}
-            <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} fill={corner ? '#fff6d6' : '#fffdf2'} stroke="#111" strokeWidth={corner ? 2.5 : 1.5} />
+            <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} fill={corner ? LANDMARK_FILL : '#f5f1e8'} stroke={INK} strokeWidth={corner ? 2.5 : 1.5} />
             {lm && !corner && (
-              <rect x={cx - size / 2} y={cy - size / 2} width={size} height="6" fill={barrioColorOf(lm)} stroke="#111" strokeWidth="1" />
+              <rect x={cx - size / 2} y={cy - size / 2} width={size} height="6" fill={barrioColorOf(lm)} stroke={INK} strokeWidth="1" />
             )}
             {lm && landmarkLotId(lm) === selectedLotId && (
-              <rect x={cx - size / 2 - 2} y={cy - size / 2 - 2} width={size + 4} height={size + 4} fill="none" stroke="#c4161c" strokeWidth="3" />
+              <rect x={cx - size / 2 - 2} y={cy - size / 2 - 2} width={size + 4} height={size + 4} fill="none" stroke={GOLD} strokeWidth="3.5" />
             )}
             {corner ? (
               <>
@@ -306,7 +314,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             ) : lm ? (
               <text x={cx} y={cy + 7} textAnchor="middle" className="icon-text">{lm.icon}</text>
             ) : (
-              <circle cx={cx} cy={cy} r="3" fill="#111" />
+              <circle cx={cx} cy={cy} r="3" fill={INK} />
             )}
           </g>
         );
@@ -331,16 +339,16 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                 width={halfW * 2}
                 height={halfH * 2}
                 rx={wholeBlock ? 3 : 4}
-                fill={l.id === 'plaza-de-armas' ? '#7ec27e' : '#fff6d6'}
-                stroke="#111"
+                fill={l.id === 'plaza-de-armas' ? '#7fa592' : LANDMARK_FILL}
+                stroke={INK}
                 strokeWidth={selected ? 3 : 1.5}
               />
-              <rect x={cx - halfW} y={cy - halfH} width={halfW * 2} height={wholeBlock ? 11 : 6} fill={barrioColorOf(l)} stroke="#111" strokeWidth="1" />
+              <rect x={cx - halfW} y={cy - halfH} width={halfW * 2} height={wholeBlock ? 11 : 6} fill={barrioColorOf(l)} stroke={INK} strokeWidth="1" />
               <text x={cx} y={cy + (wholeBlock ? 12 : 8)} textAnchor="middle" className={wholeBlock ? 'icon-text icon-big' : 'icon-text'}>
                 {l.icon}
               </text>
               {selected && (
-                <rect x={cx - halfW - 2} y={cy - halfH - 2} width={halfW * 2 + 4} height={halfH * 2 + 4} rx="5" fill="none" stroke="#c4161c" strokeWidth="3" />
+                <rect x={cx - halfW - 2} y={cy - halfH - 2} width={halfW * 2 + 4} height={halfH * 2 + 4} rx="5" fill="none" stroke={GOLD} strokeWidth="3.5" />
               )}
             </g>
           );
@@ -360,7 +368,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
               }}
             >
               <title>Avanzar hasta aquí</title>
-              <circle cx={px(n.y)} cy={py(n.x)} r="17" fill="rgba(254,242,0,0.35)" stroke="#c4161c" strokeWidth="3" strokeDasharray="5 3" />
+              <circle cx={px(n.y)} cy={py(n.x)} r="17" fill="rgba(212,175,55,0.4)" stroke={GOLD} strokeWidth="3.5" strokeDasharray="5 3" />
             </g>
           ))}
 
@@ -376,7 +384,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         const y = py(n.x) + Math.sin(ang) * off;
         return (
           <g key={`tok-${k}`} pointerEvents="none" data-active-token={t.active ? '' : undefined}>
-            <circle cx={x} cy={y} r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? '#c4161c' : '#111'} strokeWidth={t.active ? 3 : 2} />
+            <circle cx={x} cy={y} r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? '{GOLD}' : INK} strokeWidth={t.active ? 3 : 2} />
             <text x={x} y={y + 3.5} textAnchor="middle" className="token-text">{t.label}</text>
           </g>
         );

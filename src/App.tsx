@@ -197,7 +197,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
           <aside className="deed" aria-live="polite">
             {lot && barrio ? (
               <>
-                <div className="deed-band" style={{ background: BARRIO_COLORS[lot.barrio] }}>
+                <div className="deed-band">
                   <span>
                     {lot.kind === 'emblematico' && lm
                       ? `EDIFICIO EMBLEMÁTICO · ${LANDMARK_KIND_LABEL[LANDMARK_INFO[lm.id].kind].toUpperCase()}`
@@ -205,6 +205,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                   </span>
                   <strong>{lot.kind === 'emblematico' ? lot.name : KIND_LABEL[lot.kind]}</strong>
                 </div>
+                <div className="deed-stripe" style={{ background: BARRIO_COLORS[lot.barrio] }} />
                 <p className="deed-between">{lot.kind === 'emblematico' ? lm?.where : lot.name.split(', ').slice(1).join(', ')}</p>
                 <p className="deed-between">Da a: <strong>{lot.frontStreetName}</strong></p>
                 <p className="deed-barrio">
@@ -236,6 +237,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                   <dt>Lotes del barrio</dt>
                   <dd>{barrioLots.length}</dd>
                 </dl>
+                <div className="deed-tag">EDICIÓN TALCA</div>
               </>
             ) : street ? (
               <>
