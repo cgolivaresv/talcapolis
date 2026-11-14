@@ -1,17 +1,24 @@
 ﻿import { describe, expect, it } from 'vitest';
-import { BARRIOS } from './barrios';
+import { BARRIOS, barrioAt } from './barrios';
 import { buildBoard } from './board';
 import { placeLandmarks } from './landmarks';
-import { buildLots, lotsOfBarrio } from './lots';
+import { MIN_SITES_PER_MANZANA, buildLots, lotsOfBarrio, lotsOfManzana } from './lots';
 
 describe('lotes y barrios', () => {
   const board = buildBoard();
   const landmarks = placeLandmarks(board);
   const lots = buildLots(board, landmarks);
+  const manzanaIds = [...new Set(lots.map((l) => l.manzanaId))];
 
-  it('hay 57 manzanas y 19 edificios emblemáticos (3 edificios ocupan una manzana entera)', () => {
-    expect(lots.filter((l) => l.kind === 'manzana')).toHaveLength(57);
+  it('hay 60 manzanas y cada una tiene al menos 3 sitios', () => {
+    expect(manzanaIds).toHaveLength(60);
+    for (const id of manzanaIds) expect(lotsOfManzana(lots, id).length).toBeGreaterThanOrEqual(MIN_SITES_PER_MANZANA);
+  });
+
+  it('están los 19 edificios emblemáticos, además de casas y locales comerciales', () => {
     expect(lots.filter((l) => l.kind === 'emblematico')).toHaveLength(19);
+    expect(lots.filter((l) => l.kind === 'casa').length).toBeGreaterThan(0);
+    expect(lots.filter((l) => l.kind === 'local').length).toBeGreaterThan(0);
   });
 
   it('los ids son únicos y todo lote tiene precio y barrio válidos', () => {
@@ -23,24 +30,34 @@ describe('lotes y barrios', () => {
     }
   });
 
-  it('los 8 barrios tienen lotes, entre 5 y 15 cada uno', () => {
+  it('el local comercial cuesta el doble que una casa del mismo barrio', () => {
     for (const b of BARRIOS) {
-      const n = lotsOfBarrio(lots, b.id).length;
-      expect(n).toBeGreaterThanOrEqual(5);
-      expect(n).toBeLessThanOrEqual(15);
+      const casa = lots.find((l) => l.barrio === b.id && l.kind === 'casa');
+      const local = lots.find((l) => l.barrio === b.id && l.kind === 'local');
+      if (casa) expect(casa.price).toBe(b.casaPrice);
+      if (local) expect(local.price).toBe(b.casaPrice * 2);
     }
   });
 
-  it('la Plaza de Armas queda en el Barrio Plaza y la Estación en el Barrio Estación', () => {
-    const of = (id: string) => lots.find((l) => l.id === `em:${id}`)!;
-    expect(of('plaza-de-armas').barrio).toBe(0);
-    expect(of('estacion').barrio).toBe(6);
-    expect(of('corte-apelaciones').barrio).toBe(1);
+  it('todos los sitios de una manzana son del mismo barrio', () => {
+    for (const id of manzanaIds) {
+      expect(new Set(lotsOfManzana(lots, id).map((l) => l.barrio)).size).toBe(1);
+    }
   });
 
-  it('una manzana ocupada por un edificio no tiene además una casa', () => {
-    const plazaCell = lots.find((l) => l.id === 'em:plaza-de-armas')!.cell;
-    const same = lots.filter((l) => l.cell.row === plazaCell.row && l.cell.col === plazaCell.col && l.kind === 'manzana');
-    expect(same).toHaveLength(0);
+  it('los 8 barrios tienen lotes', () => {
+    for (const b of BARRIOS) expect(lotsOfBarrio(lots, b.id).length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('cada lugar real queda en su barrio', () => {
+    const of = (id: string) => lots.find((l) => l.id === `em:${id}`)!;
+    expect(of('plaza-de-armas').barrio).toBe(7);
+    expect(of('estacion').barrio).toBe(0);
+    expect(of('teatro-regional').barrio).toBe(6);
+    expect(of('mercado-central').barrio).toBe(3);
+  });
+
+  it('barrioAt asigna el lugar real más cercano', () => {
+    for (const b of BARRIOS) expect(barrioAt(b.center.rowM, b.center.colM)).toBe(b.id);
   });
 });

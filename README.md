@@ -13,7 +13,13 @@ Límites (configurables en `src/engine/board.ts`), tal como se ven en pantalla:
 - Izquierda: **2 Sur**
 - Derecha: **4 Norte**
 
-Cada **tramo de calle entre dos intersecciones** es una casilla/propiedad: 137 casillas sobre 78 intersecciones.
+Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 154 tramos sobre 88 intersecciones. **Las calles no se compran.**
+
+## Qué se compra
+
+- **Lotes:** cada manzana tiene al menos 3 sitios, que son casas, locales comerciales (cuestan el doble) o edificios emblemáticos. En total 180 lotes.
+- **Barrios:** 8 barrios con color; quien reúna todos los lotes de un barrio lo obtiene (arriendo ×2). Con los 3 sitios de una manzana, el arriendo es ×1,5. Cada barrio se define por un lugar real de Talca; sus límites son aproximados (no hay límites oficiales).
+- **Casillas "?":** 10 intersecciones naranjas que sacan una tarjeta con una acción (cobrar, pagar, avanzar a un edificio, ir a la cárcel, etc.). El mazo es determinista por semilla.
 
 Las distancias entre calles son las **reales** (cuadras de ~125 m, con tramos más largos donde existen calles intermedias como 9½ Oriente). Se midieron sobre las intersecciones de OpenStreetMap y están en `src/engine/geometry.ts`.
 

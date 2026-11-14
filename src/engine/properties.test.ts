@@ -2,11 +2,10 @@
 import { LANDMARKS } from './landmarks';
 import {
   LANDMARK_INFO,
-  MAX_BUILDING_LEVEL,
-  buildCostOf,
+  baseRentOfLot,
   landmarkPriceOf,
   landmarkRentOf,
-  manzanaRentAtLevel,
+  lotRent,
 } from './properties';
 
 describe('edificios emblemáticos', () => {
@@ -23,24 +22,17 @@ describe('edificios emblemáticos', () => {
   });
 });
 
-describe('casas y locales comerciales', () => {
-  it('el arriendo crece con cada nivel', () => {
-    const rents = Array.from({ length: MAX_BUILDING_LEVEL + 1 }, (_, l) => manzanaRentAtLevel(100, l));
-    for (let i = 1; i < rents.length; i++) expect(rents[i]).toBeGreaterThan(rents[i - 1]);
+describe('arriendo de casas y locales', () => {
+  it('es el 12% del precio, con mínimo de $2', () => {
+    expect(baseRentOfLot(100)).toBe(12);
+    expect(baseRentOfLot(40)).toBe(5);
+    expect(baseRentOfLot(10)).toBe(2);
   });
 
-  it('tener todo el barrio duplica el arriendo de una manzana sin construir, y solo de esa', () => {
-    expect(manzanaRentAtLevel(100, 0, true)).toBe(2 * manzanaRentAtLevel(100, 0, false));
-    expect(manzanaRentAtLevel(100, 2, true)).toBe(manzanaRentAtLevel(100, 2, false));
-  });
-
-  it('rechaza niveles inválidos', () => {
-    expect(() => manzanaRentAtLevel(100, 6)).toThrow();
-    expect(() => manzanaRentAtLevel(100, -1)).toThrow();
-    expect(() => manzanaRentAtLevel(100, 1.5)).toThrow();
-  });
-
-  it('construir cuesta más en los barrios caros', () => {
-    expect(buildCostOf(7)).toBeGreaterThan(buildCostOf(0));
+  it('tener la manzana completa lo multiplica por 1,5 y el barrio completo por 2', () => {
+    expect(lotRent(100)).toBe(12);
+    expect(lotRent(100, { ownsManzana: true })).toBe(18);
+    expect(lotRent(100, { ownsBarrio: true })).toBe(24);
+    expect(lotRent(100, { ownsManzana: true, ownsBarrio: true })).toBe(36);
   });
 });

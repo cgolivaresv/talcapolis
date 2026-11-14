@@ -31,6 +31,9 @@ interface Props {
   /** Tramo de calle seleccionado (las calles no se compran, solo se consultan). */
   selectedId: string | null;
   selectedLotId: string | null;
+  /** Intersecciones que son casillas "?". */
+  cardSquares: Set<string>;
+  onCardSquare: (nodeId: string) => void;
   /** Factor de zoom sobre el tamaño natural del tablero (1 = 1 px por unidad del dibujo). */
   zoom: number;
   onSelect: (segment: Segment | null) => void;
@@ -42,7 +45,7 @@ interface Props {
  *   fila    = índice de calle Oriente/Poniente (2 Poniente arriba, 11 Oriente abajo)
  *   columna = índice de calle Norte/Sur        (2 Sur a la izquierda, 4 Norte a la derecha)
  */
-export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, zoom, onSelect, onSelectLot }: Props) {
+export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
@@ -150,35 +153,59 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, z
 
       {/* Manzanas en venta: entre calles enteras consecutivas, con el color de su barrio.
           Las calles parciales (1½ Norte, etc.) cruzan por encima. */}
-      {lots
-        .filter((lot) => lot.kind === 'manzana')
-        .map((lot) => {
-          const r = fullRows[lot.cell.row];
-          const c = fullCols[lot.cell.col];
+      {fullRows.slice(0, -1).map((r, ri) =>
+        fullCols.slice(0, -1).map((c, ci) => {
+          // Sitios que se dibujan dentro de la manzana: casas, locales y edificios que ocupan la manzana.
+          const sites = lots.filter(
+            (l) =>
+              l.cell.row === ri &&
+              l.cell.col === ci &&
+              (l.kind !== 'emblematico' || landmarks.find((m) => m.id === l.landmarkId)?.anchor.type === 'block'),
+          );
           const x = px(c.index) + GAP + 6;
           const y = py(r.index) + GAP + 6;
-          const w = px(fullCols[lot.cell.col + 1].index) - px(c.index) - 2 * GAP - 12;
-          const h = py(fullRows[lot.cell.row + 1].index) - py(r.index) - 2 * GAP - 12;
-          const color = BARRIO_COLORS[lot.barrio];
+          const w = px(fullCols[ci + 1].index) - px(c.index) - 2 * GAP - 12;
+          const h = py(fullRows[ri + 1].index) - py(r.index) - 2 * GAP - 12;
+          const slotW = w / Math.max(sites.length, 1);
           return (
-            <g
-              key={lot.id}
-              className="lot"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectLot(lot);
-              }}
-            >
-              <title>{lot.name}</title>
+            <g key={`mz${ri}-${ci}`}>
               <rect x={x} y={y} width={w} height={h} rx="3" fill="#f3f8ee" stroke="#111" strokeWidth="1" />
-              <rect x={x} y={y} width={w} height="11" rx="2" fill={color} stroke="#111" strokeWidth="1" />
-              <text x={x + w / 2} y={y + h / 2 + 12} textAnchor="middle" className="icon-text lot-house">🏠</text>
-              {lot.id === selectedLotId && (
-                <rect x={x - 2} y={y - 2} width={w + 4} height={h + 4} rx="4" fill="none" stroke="#c4161c" strokeWidth="3" />
-              )}
+              {sites.map((lot, k) => {
+                const sx = x + k * slotW;
+                const selected = lot.id === selectedLotId;
+                const lm = lot.landmarkId ? landmarks.find((m) => m.id === lot.landmarkId) : undefined;
+                const icon = lm ? lm.icon : lot.kind === 'local' ? '🏪' : '🏠';
+                return (
+                  <g
+                    key={lot.id}
+                    className="lot"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectLot(lot);
+                    }}
+                  >
+                    <title>{lot.name}</title>
+                    <rect
+                      x={sx}
+                      y={y}
+                      width={slotW}
+                      height={h}
+                      fill={lm?.id === 'plaza-de-armas' ? '#7ec27e' : lm ? '#fff6d6' : lot.kind === 'local' ? '#fdf1d4' : '#f3f8ee'}
+                      stroke="#111"
+                      strokeWidth="1"
+                    />
+                    <rect x={sx} y={y} width={slotW} height="9" fill={BARRIO_COLORS[lot.barrio]} stroke="#111" strokeWidth="1" />
+                    <text x={sx + slotW / 2} y={y + h / 2 + 10} textAnchor="middle" className="icon-text lot-house">{icon}</text>
+                    {selected && (
+                      <rect x={sx - 1} y={y - 1} width={slotW + 2} height={h + 2} fill="none" stroke="#c4161c" strokeWidth="3" />
+                    )}
+                  </g>
+                );
+              })}
             </g>
           );
-        })}
+        }),
+      )}
 
       {/* Rótulos de calles */}
       {board.verticalStreets.map((s) => (
@@ -230,6 +257,22 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, z
         const cy = py(n.x);
         const size = corner ? CORNER : NODE;
         const line2 = corner ? corner[1] || lm?.icon || '' : '';
+        if (cardSquares.has(n.id)) {
+          return (
+            <g
+              key={n.id}
+              className="card-square"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCardSquare(n.id);
+              }}
+            >
+              <title>Tarjeta ?</title>
+              <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx="4" fill="#f7941d" stroke="#111" strokeWidth="2" />
+              <text x={cx} y={cy + 8} textAnchor="middle" className="card-mark">?</text>
+            </g>
+          );
+        }
         return (
           <g
             key={n.id}
@@ -261,13 +304,13 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, z
 
       {/* Edificios que ocupan una manzana entera, o que están junto a un tramo de calle */}
       {landmarks
-        .filter((l) => !Number.isInteger(l.row) || !Number.isInteger(l.col))
+        .filter((l) => l.anchor.type === 'segment')
         .map((l) => {
           const cx = px(l.col);
           const cy = py(l.row);
-          const wholeBlock = l.anchor.type === 'block';
-          const halfW = wholeBlock ? (px(l.col + 0.5) - px(l.col - 0.5)) / 2 - GAP - 6 : 15;
-          const halfH = wholeBlock ? (py(l.row + 0.5) - py(l.row - 0.5)) / 2 - GAP - 6 : 15;
+          const wholeBlock = false;
+          const halfW = 15;
+          const halfH = 15;
           const selected = landmarkLotId(l) === selectedLotId;
           return (
             <g key={l.id} className="landmark" onClick={landmarkClick(l)}>
