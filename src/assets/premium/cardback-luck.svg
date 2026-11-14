@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 520">
+<rect x="5" y="5" width="350" height="510" rx="24" fill="#144e3a" stroke="#d4af37" stroke-width="8"/>
+<rect x="22" y="22" width="316" height="476" rx="16" fill="none" stroke="#f5f1e8" stroke-width="2"/>
+<path d="M35 110L180 35l145 75M35 410l145 75 145-75" fill="none" stroke="#c68b66" stroke-width="3"/>
+<circle cx="180" cy="260" r="100" fill="none" stroke="#d4af37" stroke-width="5"/>
+<circle cx="180" cy="260" r="84" fill="none" stroke="#f5f1e8" stroke-opacity=".7" stroke-width="2"/>
+<text x="180" y="295" text-anchor="middle" font-family="Georgia,serif" font-size="100" fill="#d4af37">✦</text>
+<text x="180" y="455" text-anchor="middle" font-family="Montserrat,Arial,sans-serif" font-size="26" letter-spacing="5" fill="#f5f1e8">SUERTE</text>
+</svg>

@@ -57,3 +57,12 @@ Antes de tirar los dados, el jugador en turno puede proponer un intercambio a ot
 Paleta y tipografías del set «Edición Arquitectónica Talca» (Esmeralda Mate `#144E3A`, Cobre Cepillado `#C68B66`, Crema Alabastro `#F5F1E8`, Pizarra Carbón `#222629`, Oro Champagne `#D4AF37`), con Montserrat (títulos) e Inter (texto), servidas desde el propio proyecto (`@fontsource`). Los 8 colores de barrio siguen los grupos de la guía de estilo. Los tokens están en `src/index.css` y los colores del tablero en `src/ui/BoardView.tsx`.
 
 Los gráficos SVG (casa, mercado, catedral, plaza, teatro, tren, banco, estrella de tarjetas) están en `src/assets/graficos/` y se asignan en `src/ui/glyphs.ts`: casa para las casas, mercado para los locales comerciales y uno por edificio emblemático. `service-electricity.svg`, `service-water.svg` y `hotel.svg` (usado para universidades y liceos) quedan disponibles; los servicios aún no existen en el juego.
+
+## Interfaz premium
+
+La presentación sigue la identidad «Edición Arquitectónica Premium». Los estilos están separados del código del juego en `src/styles/` (`tokens.css`, `base.css`, `layout.css`, `components.css`, `board.css`, `animations.css`) y los componentes de interfaz en `src/ui/`. El motor (`src/engine`) no depende de la interfaz.
+
+- **Escritorio:** barra superior, jugadores a la izquierda, tablero al centro, ficha contextual y barrios a la derecha, y abajo las acciones del turno, la última tarjeta y el historial. Todo cabe sin scroll.
+- **Móvil:** barra superior compacta, tablero con zoom y arrastre (la vista sigue a la ficha en turno), barra inferior fija con las acciones y paneles desplegables (Jugadores, Ficha, Barrios, Historial). Respeta las áreas seguras del dispositivo.
+- **Animaciones** (se desactivan con `prefers-reduced-motion`): desplazamiento de fichas, giro de dados, vuelta de la tarjeta, selección de lotes, menús, hojas, ventanas y avisos. Solo representan lo que el juego ya registró.
+- **Gráficos:** `src/assets/graficos/` y `src/assets/premium/` (ilustraciones de hitos, reverso de tarjeta, medallón).

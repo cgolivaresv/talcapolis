@@ -219,7 +219,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                 return (
                   <g
                     key={lot.id}
-                    className="lot"
+                    className={selected ? 'lot is-selected' : 'lot'}
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelectLot(lot);
@@ -406,9 +406,16 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         const x = sx(n.x) + Math.cos(ang) * off;
         const y = sy(n.y) + Math.sin(ang) * off;
         return (
-          <g key={`tok-${k}`} pointerEvents="none" data-active-token={t.active ? '' : undefined}>
-            <circle cx={x} cy={y} r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? '{GOLD}' : INK} strokeWidth={t.active ? 3 : 2} />
-            <text x={x} y={y + 3.5} textAnchor="middle" className="token-text">{t.label}</text>
+          <g
+            key={`tok-${k}`}
+            className={t.active ? 'token is-active' : 'token'}
+            style={{ transform: `translate(${x}px, ${y}px)` }}
+            pointerEvents="none"
+            data-active-token={t.active ? '' : undefined}
+          >
+            {t.active && <circle className="token-halo" r="13" fill="none" stroke={GOLD} strokeWidth="2" />}
+            <circle r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? GOLD : INK} strokeWidth={t.active ? 3 : 2} />
+            <text y="3.5" textAnchor="middle" className="token-text">{t.label}</text>
           </g>
         );
       })}

@@ -1,0 +1,175 @@
+/* Tablero: marco, controles de zoom y estilos de los elementos del dibujo SVG (la geometría no cambia) */
+
+.board-frame {
+  padding: 12px; /* debe coincidir con FRAME en App.tsx */
+  border-radius: var(--radius-l);
+  background: linear-gradient(145deg, var(--emerald-soft), var(--emerald-deep));
+  box-shadow:
+    inset 0 0 0 3px var(--gold),
+    inset 0 0 0 5px var(--emerald-deep),
+    inset 0 0 0 6px rgba(245, 241, 232, 0.65),
+    var(--shadow-2);
+}
+
+.board-scroll {
+  overflow: auto;
+  border-radius: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--copper) transparent;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+}
+
+.board {
+  display: block;
+  max-width: none;
+  height: auto;
+}
+
+.zoom {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.2rem 0.35rem;
+  background: rgba(13, 56, 43, 0.82);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 99px;
+  color: var(--alabaster);
+  font-size: 0.72rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+.zoom span {
+  min-width: 2.6rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.zoom button {
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--copper);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--alabaster);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-in-out);
+}
+
+.zoom button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.zoom button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.zoom .zoom-fit {
+  font-size: 0.68rem;
+}
+
+@media (max-width: 899px) {
+  .zoom button {
+    min-width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.1rem;
+  }
+
+  .zoom .zoom-fit {
+    font-size: 0.72rem;
+  }
+}
+
+/* --- Elementos del SVG --- */
+.axis-label {
+  fill: var(--emerald);
+  font: 600 9.5px var(--font-body);
+  text-transform: uppercase;
+}
+
+.axis-alias {
+  fill: #4d6a5c;
+  font-size: 7.5px;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.corner-text {
+  fill: var(--slate);
+  font: 800 7.5px var(--font-title);
+}
+
+.icon-text {
+  font: 16px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+}
+
+.token-text {
+  fill: #fff;
+  font: 900 9px var(--font-title);
+}
+
+.tile,
+.lot,
+.landmark,
+.card-square,
+.move-option {
+  cursor: pointer;
+}
+
+.tile:hover rect:first-of-type {
+  fill: #fff;
+}
+
+.landmark:hover rect {
+  filter: brightness(1.06);
+}
+
+.card-square {
+  transition: filter var(--t-fast) var(--ease-in-out);
+}
+
+.card-square:hover rect {
+  fill: var(--slate-soft);
+}
+
+/* Selección de propiedades: borde dorado (dibujado por el SVG) y elevación sutil */
+.lot {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform var(--t-base) var(--ease),
+    filter var(--t-base) var(--ease);
+}
+
+.lot:hover {
+  filter: brightness(1.04);
+}
+
+.lot.is-selected {
+  transform: translateY(-1.5px);
+  filter: drop-shadow(0 2px 3px rgba(34, 38, 41, 0.45));
+}
+
+/* Fichas: desplazamiento fluido entre posiciones y halo en la ficha activa */
+.token {
+  transition: transform 560ms var(--ease-in-out);
+}
+
+.token-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: halo 2.2s ease-in-out infinite;
+}
+
+.move-option circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 1.2s ease-in-out infinite;
+}

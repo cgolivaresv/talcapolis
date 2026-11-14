@@ -82,10 +82,10 @@ export function TradePanel({ game, lots, colors, onPropose, onCancel }: Props) {
       {money(takeMoney, game.players[to].money, setTakeMoney)}
 
       <div className="trade-actions">
-        <button type="button" className="roll-btn" disabled={!valid} onClick={() => onPropose(trade)}>
+        <button type="button" className="btn btn-primary" disabled={!valid} onClick={() => onPropose(trade)}>
           Proponer
         </button>
-        <button type="button" className="skip-btn" onClick={onCancel}>
+        <button type="button" className="btn btn-secondary" onClick={onCancel}>
           Cancelar
         </button>
       </div>

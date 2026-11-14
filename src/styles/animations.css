@@ -1,0 +1,86 @@
+/* Animaciones breves y sin rebotes. Todas representan estados que entrega el juego. */
+
+@keyframes die-roll {
+  0% {
+    transform: rotateX(0) rotateY(0) rotate(0) scale(0.85);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotateX(720deg) rotateY(540deg) rotate(0) scale(1);
+  }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: perspective(700px) rotateX(10deg) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes card-flip {
+  0% {
+    transform: translateY(8px) rotateY(180deg);
+  }
+  100% {
+    transform: translateY(0) rotateY(0deg);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes halo {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.14);
+  }
+}
+
+/* Indicador del jugador en turno (barra superior) */
+.dot.halo {
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.35);
+  animation: dot-halo 2.2s ease-in-out infinite;
+}
+
+@keyframes dot-halo {
+  50% {
+    box-shadow: 0 0 0 5px rgba(212, 175, 55, 0.12);
+  }
+}

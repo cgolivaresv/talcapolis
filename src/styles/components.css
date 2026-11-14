@@ -1,0 +1,743 @@
+/* Componentes: paneles, jugadores, acciones, fichas de propiedad, tarjetas, avisos, ventanas modales */
+
+/* --- Panel base (radios, sombras y jerarquía tipográfica compartidos) --- */
+.panel {
+  position: relative;
+  min-height: 0;
+  padding: var(--space-3);
+  overflow: auto;
+  background: linear-gradient(180deg, var(--paper), var(--alabaster));
+  border: var(--hairline);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-1);
+  color: var(--slate);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(198, 139, 102, 0.45);
+}
+
+.panel-head h2 {
+  color: var(--emerald);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.panel-head .sheet-close {
+  position: static;
+}
+
+.note {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+/* --- Jugadores --- */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--slate);
+  color: #fff;
+  font: 800 0.8rem var(--font-title);
+}
+
+.player-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.35rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  transition:
+    background var(--t-base) var(--ease-in-out),
+    border-color var(--t-base) var(--ease-in-out),
+    box-shadow var(--t-base) var(--ease-in-out);
+}
+
+.player.is-active {
+  background: rgba(212, 175, 55, 0.14);
+  border-color: rgba(212, 175, 55, 0.75);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.14);
+}
+
+.player.is-out {
+  opacity: 0.5;
+}
+
+.player-name {
+  display: grid;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.player-name small {
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+
+.money {
+  margin-left: auto;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-info {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(198, 139, 102, 0.45);
+  font-size: 0.75rem;
+}
+
+.game-info dt {
+  color: var(--ink-muted);
+}
+
+.game-info dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Acciones del turno y dados --- */
+.action-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.action-panel .panel-head {
+  margin-bottom: 0;
+}
+
+.action-panel h2 {
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-size: 0.9rem;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.hint em {
+  color: var(--ink-muted);
+  font-style: normal;
+}
+
+.winner {
+  margin: 0;
+  color: var(--emerald);
+  font: 800 1rem var(--font-title);
+}
+
+.action-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.trade-summary {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.buy-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1);
+}
+
+.buy-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 1.9rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--copper);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-in-out),
+    transform var(--t-fast) var(--ease);
+}
+
+.buy-option:hover {
+  background: #f0e8d8;
+  transform: translateY(-1px);
+}
+
+.buy-option .buy-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.buy-option strong {
+  margin-left: auto;
+  color: var(--emerald);
+}
+
+.dice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  perspective: 500px;
+}
+
+.die {
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0.28rem;
+  background: linear-gradient(145deg, #fff, #ece4d3);
+  border: 1px solid var(--slate);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-1);
+  animation: die-roll 620ms var(--ease) both;
+}
+
+.die i {
+  place-self: center;
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.die i.on {
+  background: var(--slate);
+}
+
+.dice-total {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  font-style: normal;
+}
+
+/* --- Ficha de propiedad (panel contextual) --- */
+.deed {
+  flex: 1 1 auto;
+  text-align: center;
+  border-color: var(--card, var(--copper));
+  animation: card-in var(--t-slow) var(--ease) both;
+}
+
+.deed .sheet-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+.deed-band {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.55rem 0.5rem;
+  background: var(--card, var(--emerald));
+  border: 2px solid var(--slate);
+  border-radius: var(--radius-s);
+  color: var(--card-fg, var(--alabaster));
+}
+
+.deed-band span {
+  color: var(--card-accent, var(--copper));
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+}
+
+.deed-band strong {
+  font: 800 1.05rem var(--font-title);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.deed-glyph,
+.deed-art {
+  justify-self: center;
+  background: var(--alabaster);
+  border: 2px solid var(--copper);
+}
+
+.deed-glyph {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.25rem;
+  border-radius: 50%;
+}
+
+.deed-art {
+  width: 5.2rem;
+  height: auto;
+  border-radius: var(--radius-s);
+}
+
+.district-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-title);
+}
+
+.deed-line {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+}
+
+.deed-owner {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.deed-rows {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--card, var(--copper));
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.deed-rows dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.deed-tag {
+  width: max-content;
+  margin: var(--space-3) auto 0;
+  padding: 0.25rem 0.8rem;
+  background: var(--slate);
+  border-radius: 4px;
+  color: var(--copper);
+  font: 600 0.58rem var(--font-title);
+  letter-spacing: 0.3em;
+}
+
+.deed-empty {
+  margin: var(--space-3) 0;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Barrios --- */
+.barrios-panel {
+  flex: none;
+}
+
+.barrio-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+}
+
+.barrio-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.barrio-list em {
+  color: var(--ink-muted);
+  font-size: 0.85em;
+  font-style: normal;
+}
+
+/* --- Historial --- */
+.log-panel {
+  min-width: 0;
+}
+
+.log {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+}
+
+.log li:not(:first-child) {
+  color: var(--ink-muted);
+}
+
+.log li:first-child {
+  font-weight: 600;
+}
+
+/* --- Tarjeta sacada --- */
+.drawn {
+  display: grid;
+  place-items: center;
+  width: 9.4rem;
+  padding: var(--space-2);
+  background: var(--emerald);
+  border-color: var(--gold);
+  perspective: 900px;
+}
+
+.drawn-empty {
+  gap: var(--space-2);
+  color: rgba(245, 241, 232, 0.8);
+  text-align: center;
+  font-size: 0.66rem;
+}
+
+.drawn-empty img {
+  width: 3.2rem;
+  opacity: 0.85;
+}
+
+.drawn-empty p {
+  margin: 0;
+}
+
+.drawn .sheet-close {
+  display: none;
+}
+
+.flip {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 360 / 520;
+  max-height: 100%;
+}
+
+.flip-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: card-flip 900ms var(--ease) both;
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: var(--radius-m);
+}
+
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+.flip-front {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0.4rem;
+  overflow: hidden;
+  background: var(--paper);
+  border: 2px solid var(--emerald);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--copper);
+  color: var(--slate);
+  text-align: center;
+}
+
+.card-star {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.card-who {
+  margin: 0;
+  color: var(--copper-dark);
+  font: 700 0.56rem var(--font-title);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.card-text {
+  margin: 0;
+  font-size: 0.6rem;
+  line-height: 1.25;
+}
+
+.card-effect {
+  margin: auto 0 0;
+  color: var(--emerald);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+/* --- Avisos --- */
+.toasts {
+  position: fixed;
+  top: calc(3.6rem + var(--safe-top));
+  left: 50%;
+  z-index: 60;
+  width: min(30rem, calc(100vw - 1.5rem));
+  display: grid;
+  gap: var(--space-2);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--copper);
+  border-left-width: 4px;
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  box-shadow: var(--shadow-2);
+  color: var(--slate);
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  animation: toast-in var(--t-base) var(--ease) both;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.toast.tone-good {
+  border-left-color: var(--emerald-soft);
+}
+
+.toast.tone-warn {
+  border-left-color: var(--danger);
+}
+
+.toast.tone-info {
+  border-left-color: var(--copper);
+}
+
+.toast.is-leaving {
+  animation: toast-out var(--t-base) var(--ease-in-out) both;
+}
+
+/* --- Ventana modal --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--space-3);
+  background: rgba(13, 56, 43, 0.6);
+  opacity: 0;
+  transition: opacity var(--t-base) var(--ease-in-out);
+}
+
+.modal[data-open='true'] {
+  opacity: 1;
+}
+
+.modal-card {
+  width: min(30rem, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: var(--space-4);
+  background: var(--alabaster);
+  border: var(--hairline);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-2);
+  transform: translateY(18px);
+  transition: transform var(--t-base) var(--ease);
+}
+
+.modal[data-open='true'] .modal-card {
+  transform: none;
+}
+
+.modal-card > h2 {
+  margin-bottom: var(--space-3);
+  color: var(--emerald);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+}
+
+/* --- Intercambio --- */
+.trade-form h3 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.trade-lots {
+  max-height: 9rem;
+  margin: 0;
+  padding: var(--space-1);
+  overflow: auto;
+  list-style: none;
+  background: var(--paper);
+  border: var(--hairline);
+  border-radius: var(--radius-s);
+  font-size: 0.75rem;
+}
+
+.trade-lots label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 0.15rem 0;
+}
+
+.trade-lots strong {
+  margin-left: auto;
+}
+
+.trade-none {
+  color: var(--ink-muted);
+}
+
+.trade-money,
+.trade-to {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  font-size: 0.82rem;
+}
+
+.trade-money input,
+.trade-to select,
+.setup-names input {
+  padding: 0.35rem 0.5rem;
+  background: var(--paper);
+  border: 1px solid var(--copper);
+  border-radius: var(--radius-s);
+}
+
+.trade-money input {
+  width: 6rem;
+}
+
+.trade-actions {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* --- Pantalla inicial --- */
+.setup-screen {
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: calc(var(--space-4) + var(--safe-top)) var(--space-4) calc(var(--space-4) + var(--safe-bottom));
+}
+
+.setup-medallion {
+  width: min(24rem, 90vw);
+  height: auto;
+  filter: drop-shadow(0 12px 24px rgba(6, 28, 20, 0.45));
+  animation: card-in var(--t-slow) var(--ease) both;
+}
+
+.setup {
+  display: grid;
+  gap: var(--space-3);
+  width: min(24rem, 100%);
+  padding: var(--space-4);
+  animation: card-in var(--t-slow) var(--ease) 80ms both;
+}
+
+.segmented {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+}
+
+.segmented button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--copper);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  font: 800 1rem var(--font-title);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-in-out);
+}
+
+.segmented button.on {
+  background: var(--emerald);
+  border-color: var(--emerald-deep);
+  color: var(--alabaster);
+}
+
+.setup-names {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setup-names li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.setup-names input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+}
+
+.setup-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
+.barrio-list {
+  gap: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+}

@@ -1,29 +1,11 @@
 @import '@fontsource/montserrat/600.css';
+@import '@fontsource/montserrat/700.css';
 @import '@fontsource/montserrat/800.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/600.css';
-
-/* Paleta del set gráfico "Edición Arquitectónica Talca" (monopoly_talca_emerald_copper_v2) */
-:root {
-  --esmeralda: #144e3a;
-  --cobre: #c68b66;
-  --alabastro: #f5f1e8;
-  --pizarra: #222629;
-  --oro: #d4af37;
-  --font-title: 'Montserrat', 'Segoe UI', Arial, sans-serif;
-  --font-body: 'Inter', 'Segoe UI', Arial, sans-serif;
-
-  color-scheme: light;
-  font-family: var(--font-body);
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--esmeralda);
-}
-
-/* El tamaño de todo el texto sigue al alto de la ventana, para que la interfaz quepa sin scroll. */
-html {
-  font-size: clamp(11px, 1.55vh, 17px);
-}
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/components.css';
+@import './styles/board.css';
+@import './styles/animations.css';

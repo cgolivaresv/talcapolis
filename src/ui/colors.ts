@@ -26,3 +26,8 @@ export function cardTheme(bg: string): CSSProperties {
     '--card-accent': light ? 'rgba(34, 38, 41, 0.72)' : 'rgba(245, 241, 232, 0.78)',
   } as CSSProperties;
 }
+
+/** Color de la ficha de cada jugador (en orden de asiento). */
+export const PLAYER_COLORS = ['#e8423a', '#2f7fd6', '#f2b90c', '#2e9e5b', '#8e44ad', '#555555'];
+
+export const KIND_LABEL = { casa: 'Casa', local: 'Local comercial', emblematico: 'Edificio emblemático' } as const;
