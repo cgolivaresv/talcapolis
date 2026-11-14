@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildBoard } from './board';
 import { lotsAround, rentOf, rentsDue } from './economy';
-import { buy, moveTo, newGame, roll, type Game } from './game';
+import { acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, type Game } from './game';
 import { placeLandmarks } from './landmarks';
 import { buildLots } from './lots';
 
@@ -48,5 +48,56 @@ describe('economía', () => {
     expect(g.bankrupt[1]).toBe(true);
     expect(g.winner).toBe(0);
     expect(roll(g, board)).toBe(g);
+  });
+
+  it('solo se cobra el arriendo del sitio más caro', () => {
+    const node = '11-oriente/2-sur';
+    const around = lotsAround(board, lots, node);
+    const g = newGame(['A', 'B'], 1);
+    const owners = Object.fromEntries(around.map((l) => [l.id, 0]));
+    const due = rentsDue(board, lots, owners, node, 1);
+    expect(due).toHaveLength(1);
+    const max = Math.max(...around.map((l) => rentOf(l, 0, owners, lots)));
+    expect(due[0].amount).toBe(max);
+    expect(g.players).toHaveLength(2);
+  });
+});
+
+describe('intercambios', () => {
+  const [l1, l2] = lots.filter((l) => l.kind === 'casa');
+  const base = (): Game => {
+    const g = newGame(['A', 'B'], 1);
+    return {
+      ...g,
+      owners: { [l1.id]: 0, [l2.id]: 1 },
+      players: [{ ...g.players[0], ownedLotIds: [l1.id] }, { ...g.players[1], ownedLotIds: [l2.id] }],
+    };
+  };
+  const offer = { from: 0, to: 1, giveLots: [l1.id], giveMoney: 100, takeLots: [l2.id], takeMoney: 0 };
+
+  it('si el otro acepta, cambian lotes y plata', () => {
+    let g = proposeTrade(base(), offer);
+    expect(g.trade).not.toBeNull();
+    g = acceptTrade(g);
+    expect(g.owners[l1.id]).toBe(1);
+    expect(g.owners[l2.id]).toBe(0);
+    expect(g.players[0].money).toBe(1400);
+    expect(g.players[1].money).toBe(1600);
+    expect(g.players[0].ownedLotIds).toEqual([l2.id]);
+    expect(g.players[1].ownedLotIds).toEqual([l1.id]);
+    expect(g.trade).toBeNull();
+  });
+
+  it('rechazar no cambia nada', () => {
+    const g = rejectTrade(proposeTrade(base(), offer));
+    expect(g.trade).toBeNull();
+    expect(g.owners[l1.id]).toBe(0);
+  });
+
+  it('no se aceptan ofertas inválidas: lotes ajenos, más plata de la que se tiene o vacías', () => {
+    expect(proposeTrade(base(), { ...offer, giveLots: [l2.id] }).trade).toBeNull();
+    expect(proposeTrade(base(), { ...offer, giveMoney: 5000 }).trade).toBeNull();
+    expect(proposeTrade(base(), { ...offer, giveLots: [], giveMoney: 0, takeLots: [] }).trade).toBeNull();
+    expect(proposeTrade(base(), { ...offer, from: 1, to: 0 }).trade).toBeNull(); // no es su turno
   });
 });

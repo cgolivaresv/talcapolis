@@ -8,6 +8,16 @@ import { GO_TO_JAIL_NODE, START_BONUS, START_NODE, destinations, rollDice, type 
 export const JAIL_FINE = 50;
 export const STARTING_MONEY = 1500;
 
+/** Propuesta de intercambio: el jugador en turno (`from`) ofrece `give` y pide `take` a `to`. */
+export interface Trade {
+  from: number;
+  to: number;
+  giveLots: string[];
+  giveMoney: number;
+  takeLots: string[];
+  takeMoney: number;
+}
+
 export interface Game {
   players: PlayerState[];
   /** Jugador en turno (índice). */
@@ -27,6 +37,8 @@ export interface Game {
   /** Si al terminar de decidir la compra el jugador vuelve a tirar (dobles). */
   rollAgain: boolean;
   bankrupt: boolean[];
+  /** Intercambio propuesto por el jugador en turno, a la espera de respuesta. */
+  trade: Trade | null;
   /** Índice del ganador cuando solo queda un jugador sin quebrar. */
   winner: number | null;
   log: string[];
@@ -46,6 +58,7 @@ export function newGame(names: string[], seed: number): Game {
     buyOptions: [],
     rollAgain: false,
     bankrupt: names.map(() => false),
+    trade: null,
     winner: null,
     log: ['Comienza la partida. Todos parten en la SALIDA (Estación).'],
   };
@@ -83,7 +96,7 @@ function declareBankrupt(g: Game, i: number): Game {
 
 /** Tira los dados del jugador en turno y calcula a dónde puede llegar. */
 export function roll(game: Game, board: Board): Game {
-  if (game.winner !== null || game.options.length > 0 || game.dice || game.buyOptions.length > 0) return game;
+  if (game.winner !== null || game.trade || game.options.length > 0 || game.dice || game.buyOptions.length > 0) return game;
   const i = game.current;
   let me = game.players[i];
   const { dice, seed } = rollDice(game.seed);
@@ -215,4 +228,50 @@ export function buy(game: Game, lotId: string, lots: Lot[]): Game {
 export function skipBuy(game: Game): Game {
   if (game.buyOptions.length === 0) return game;
   return finishTurn(game);
+}
+
+// --- Intercambios ------------------------------------------------------------
+
+/** Solo se negocia antes de tirar los dados: sin dados, destinos ni compra pendientes. */
+const canTrade = (g: Game) => g.winner === null && !g.trade && !g.dice && g.options.length === 0 && g.buyOptions.length === 0;
+
+/** ¿Es válida la propuesta con el estado actual (dueños y plata)? */
+export function tradeIsValid(g: Game, t: Trade): boolean {
+  const { from, to } = t;
+  if (from === to || g.bankrupt[from] || g.bankrupt[to]) return false;
+  if (t.giveMoney < 0 || t.takeMoney < 0 || !Number.isInteger(t.giveMoney) || !Number.isInteger(t.takeMoney)) return false;
+  if (t.giveLots.length + t.takeLots.length + t.giveMoney + t.takeMoney === 0) return false;
+  if (t.giveMoney > g.players[from].money || t.takeMoney > g.players[to].money) return false;
+  return t.giveLots.every((id) => g.owners[id] === from) && t.takeLots.every((id) => g.owners[id] === to);
+}
+
+/** El jugador en turno propone un intercambio. */
+export function proposeTrade(game: Game, trade: Trade): Game {
+  if (!canTrade(game) || trade.from !== game.current || !tradeIsValid(game, trade)) return game;
+  return { ...game, trade };
+}
+
+/** El otro jugador acepta: se mueven lotes y plata. */
+export function acceptTrade(game: Game): Game {
+  const t = game.trade;
+  if (!t || !tradeIsValid(game, t)) return rejectTrade(game);
+  const owners = { ...game.owners };
+  for (const id of t.giveLots) owners[id] = t.to;
+  for (const id of t.takeLots) owners[id] = t.from;
+  const players = game.players.map((p, k) => {
+    if (k !== t.from && k !== t.to) return p;
+    const mine = k === t.from;
+    const lotsOut = mine ? t.giveLots : t.takeLots;
+    const lotsIn = mine ? t.takeLots : t.giveLots;
+    const delta = mine ? t.takeMoney - t.giveMoney : t.giveMoney - t.takeMoney;
+    return { ...p, money: p.money + delta, ownedLotIds: [...p.ownedLotIds.filter((id) => !lotsOut.includes(id)), ...lotsIn] };
+  });
+  return { ...game, owners, players, trade: null, log: [...game.log, `${players[t.from].id} y ${players[t.to].id} cierran un intercambio (${t.giveLots.length} lotes y $${t.giveMoney} por ${t.takeLots.length} lotes y $${t.takeMoney}).`] };
+}
+
+/** El otro jugador rechaza (o el proponente retira la oferta). */
+export function rejectTrade(game: Game): Game {
+  const t = game.trade;
+  if (!t) return game;
+  return { ...game, trade: null, log: [...game.log, `${game.players[t.to].id} rechaza el intercambio de ${game.players[t.from].id}.`] };
 }

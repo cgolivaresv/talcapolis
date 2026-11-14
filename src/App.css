@@ -440,3 +440,68 @@
 .players small {
   opacity: 0.6;
 }
+
+.trade-open {
+  width: 100%;
+  margin-top: 6px;
+  justify-content: center;
+}
+
+.trade-form h3 {
+  margin: 8px 0 4px;
+  font-size: 0.8rem;
+}
+
+.trade-lots {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 110px;
+  overflow: auto;
+  border: 1px solid #bbb;
+  background: #fff;
+  font-size: 0.7rem;
+}
+
+.trade-lots label {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.trade-lots strong {
+  margin-left: auto;
+}
+
+.trade-none {
+  opacity: 0.6;
+}
+
+.trade-money,
+.trade-to {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
+.trade-money input {
+  width: 80px;
+}
+
+.trade-actions {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.trade-summary {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+}
+
+.roll-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

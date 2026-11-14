@@ -40,7 +40,10 @@ export function rentOf(lot: Lot, owner: number, owners: Owners, lots: Lot[]): nu
   });
 }
 
-/** Arriendos que debe pagar quien cae en una intersección: uno por cada lote ajeno con dueño. */
+/**
+ * Arriendo que debe pagar quien cae en una intersección: solo el del sitio más caro entre los lotes
+ * ajenos con dueño que dan a ella (si no hay ninguno, nada).
+ */
 export function rentsDue(board: Board, lots: Lot[], owners: Owners, nodeId: string, payer: number) {
   const due: { lot: Lot; owner: number; amount: number }[] = [];
   for (const lot of lotsAround(board, lots, nodeId)) {
@@ -48,7 +51,8 @@ export function rentsDue(board: Board, lots: Lot[], owners: Owners, nodeId: stri
     if (owner === undefined || owner === payer) continue;
     due.push({ lot, owner, amount: rentOf(lot, owner, owners, lots) });
   }
-  return due;
+  const top = due.reduce<(typeof due)[number] | null>((best, d) => (best && best.amount >= d.amount ? best : d), null);
+  return top ? [top] : [];
 }
 
 /** ¿Tiene el jugador todos los lotes del barrio? */

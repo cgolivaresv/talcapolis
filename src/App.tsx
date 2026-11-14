@@ -3,7 +3,7 @@ import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
 import { cardSquaresOf } from './engine/cards';
-import { buy, moveTo, newGame, roll, skipBuy } from './engine/game';
+import { acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, skipBuy } from './engine/game';
 import { placeLandmarks } from './engine/landmarks';
 import { buildLots, lotsOfBarrio, lotsOfManzana, type Lot } from './engine/lots';
 import {
@@ -16,6 +16,7 @@ import {
 } from './engine/properties';
 import { directionOf } from './engine/traffic';
 import { BARRIO_COLORS, BoardView } from './ui/BoardView';
+import { TradePanel } from './ui/TradePanel';
 import './App.css';
 
 const PLAYER_NAMES = ['Jugador 1', 'Jugador 2', 'Jugador 3'];
@@ -42,6 +43,10 @@ export default function App() {
     () => Object.fromEntries(Object.entries(game.owners).map(([id, o]) => [id, PLAYER_COLORS[o]])),
     [game.owners],
   );
+  const [trading, setTrading] = useState(false);
+  const lotName = (id: string) => lots.find((l) => l.id === id)?.name.split(',')[0] ?? id;
+  const tradeSide = (ids: string[], money: number) =>
+    [...ids.map(lotName), ...(money ? [`${money}`] : [])].join(' + ') || 'nada';
   const buyLots = game.buyOptions.map((id) => lots.find((l) => l.id === id)!);
 
   // Lleva la vista hasta la ficha del jugador en turno (el tablero es más alto que la pantalla).
@@ -119,6 +124,34 @@ export default function App() {
               <p className="turn-hint">
                 <strong>¡{game.players[game.winner].id} gana la partida!</strong>
               </p>
+            ) : game.trade ? (
+              <div className="buy">
+                <p className="turn-hint">
+                  <strong>{game.players[game.trade.from].id}</strong> propone a <strong>{game.players[game.trade.to].id}</strong>:
+                </p>
+                <p className="trade-summary">
+                  Da: {tradeSide(game.trade.giveLots, game.trade.giveMoney)}
+                  <br />
+                  Pide: {tradeSide(game.trade.takeLots, game.trade.takeMoney)}
+                </p>
+                <button type="button" className="roll-btn" onClick={() => setGame((g) => acceptTrade(g))}>
+                  {game.players[game.trade.to].id} acepta
+                </button>
+                <button type="button" className="skip-btn" onClick={() => setGame((g) => rejectTrade(g))}>
+                  Rechazar
+                </button>
+              </div>
+            ) : trading ? (
+              <TradePanel
+                game={game}
+                lots={lots}
+                colors={PLAYER_COLORS}
+                onPropose={(t) => {
+                  setGame((g) => proposeTrade(g, t));
+                  setTrading(false);
+                }}
+                onCancel={() => setTrading(false)}
+              />
             ) : game.buyOptions.length > 0 ? (
               <div className="buy">
                 <p className="turn-hint">Puedes comprar un lote de aquí:</p>
@@ -136,9 +169,14 @@ export default function App() {
             ) : game.options.length > 0 ? (
               <p className="turn-hint">Toca una intersección marcada para avanzar ({game.options.length} destinos).</p>
             ) : (
-              <button type="button" className="roll-btn" onClick={() => setGame((g) => roll(g, board))}>
-                Tirar dados
-              </button>
+              <>
+                <button type="button" className="roll-btn" onClick={() => setGame((g) => roll(g, board))}>
+                  Tirar dados
+                </button>
+                <button type="button" className="skip-btn trade-open" onClick={() => setTrading(true)}>
+                  Proponer intercambio
+                </button>
+              </>
             )}
             <ul className="players">
               {game.players.map((p, k) => (

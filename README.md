@@ -24,7 +24,7 @@ Cada jugador parte en la SALIDA (Estación). En su turno tira **dos dados** y av
 Al caer en una intersección, los **lotes que dan a ella** (de las 4 manzanas que la rodean, los sitios que miran a cualquiera de las dos calles que se cruzan: hasta 8) son los que importan:
 
 - Los que están **libres** se pueden comprar, uno por visita, si alcanza la plata (o se pasa).
-- Por los que tienen **dueño ajeno** se paga arriendo, uno por lote (12% del precio; ×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio). Los edificios emblemáticos cobran el 10% de su precio y se duplica por cada otro de la misma clase.
+- Entre los que tienen **dueño ajeno** se paga solo el arriendo del **sitio más caro** (12% del precio; ×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio). Los edificios emblemáticos cobran el 10% de su precio y se duplica por cada otro de la misma clase.
 - Quien no puede pagar **quiebra**: sus lotes vuelven a quedar libres y sale de la partida. Gana el último que queda.
 
 La lógica está en `src/engine/economy.ts`.
@@ -52,3 +52,7 @@ npm test           # tests unitarios
 npm run typecheck
 npm run build
 ```
+
+## Intercambios
+
+Antes de tirar los dados, el jugador en turno puede proponer un intercambio a otro jugador: lotes y/o dinero a cambio de lotes y/o dinero. El otro jugador acepta o rechaza. Una oferta solo es válida si cada lote es de quien lo ofrece y si ambos tienen el dinero. No hay hipotecas.
