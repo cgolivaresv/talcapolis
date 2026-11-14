@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import type { Board, Intersection, Segment, Street } from '../engine/board';
+import { lerpPositionM, type Board, type Intersection, type Segment } from '../engine/board';
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
+import type { Lot } from '../engine/lots';
 import { directionOf } from '../engine/traffic';
 
-/** Colores de los grupos, como en el Monopoly clásico. */
-export const GROUP_COLORS = [
+/** Color de cada barrio (índice = id del barrio), como en el Monopoly clásico. */
+export const BARRIO_COLORS = [
   '#955436', // café
   '#aae0fa', // celeste
   '#d93a96', // rosado
@@ -26,12 +27,14 @@ const CORNER = 52;
 interface Props {
   board: Board;
   landmarks: PlacedLandmark[];
+  lots: Lot[];
+  /** Tramo de calle seleccionado (las calles no se compran, solo se consultan). */
   selectedId: string | null;
-  selectedLandmarkId: string | null;
+  selectedLotId: string | null;
   /** Factor de zoom sobre el tamaño natural del tablero (1 = 1 px por unidad del dibujo). */
   zoom: number;
   onSelect: (segment: Segment | null) => void;
-  onSelectLandmark: (landmark: PlacedLandmark) => void;
+  onSelectLot: (lot: Lot) => void;
 }
 
 /**
@@ -39,21 +42,12 @@ interface Props {
  *   fila    = índice de calle Oriente/Poniente (2 Poniente arriba, 11 Oriente abajo)
  *   columna = índice de calle Norte/Sur        (2 Sur a la izquierda, 4 Norte a la derecha)
  */
-/** Posición en metros de una coordenada de grilla (posible fraccionaria), interpolando entre calles. */
-function lerpM(streets: Street[], f: number): number {
-  const i = Math.min(Math.floor(f), streets.length - 1);
-  const t = f - i;
-  const a = streets[i].positionM;
-  const b = streets[Math.min(i + 1, streets.length - 1)].positionM;
-  return a + (b - a) * t;
-}
-
-export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zoom, onSelect, onSelectLandmark }: Props) {
+export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
-  const px = (col: number) => LEFT + K * lerpM(board.horizontalStreets, col);
-  const py = (row: number) => TOP + K * lerpM(board.verticalStreets, row);
+  const px = (col: number) => LEFT + K * lerpPositionM(board.horizontalStreets, col);
+  const py = (row: number) => TOP + K * lerpPositionM(board.verticalStreets, row);
   const width = px(cols - 1) + 70;
   const height = py(rows - 1) + 70;
   const fullRows = board.verticalStreets.filter((s) => !s.spanM);
@@ -71,10 +65,14 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
 
   const landmarkAtNode = (row: number, col: number) =>
     landmarks.find((l) => l.row === row && l.col === col);
+  const lotByLandmark = useMemo(() => new Map(lots.filter((l) => l.landmarkId).map((l) => [l.landmarkId, l])), [lots]);
   const landmarkClick = (l: PlacedLandmark) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    onSelectLandmark(l);
+    const lot = lotByLandmark.get(l.id);
+    if (lot) onSelectLot(lot);
   };
+  const landmarkLotId = (l: PlacedLandmark) => `em:${l.id}`;
+  const barrioColorOf = (l: PlacedLandmark) => BARRIO_COLORS[lotByLandmark.get(l.id)?.barrio ?? 0];
 
   const tile = (seg: Segment) => {
     const a = byId.get(seg.from) as Intersection;
@@ -150,21 +148,37 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
       <rect x="4" y="4" width={width - 8} height={height - 8} rx="10" fill="#cde6d0" stroke="#111" strokeWidth="4" />
       <rect x="12" y="12" width={width - 24} height={height - 24} rx="6" fill="none" stroke="#111" strokeWidth="1.5" />
 
-      {/* Manzanas: entre calles enteras consecutivas; las calles parciales cruzan por encima */}
-      {fullRows.slice(0, -1).map((r, i) =>
-        fullCols.slice(0, -1).map((c, j) => (
-          <rect
-            key={`b${r.index}-${c.index}`}
-            x={px(c.index) + GAP + 6}
-            y={py(r.index) + GAP + 6}
-            width={px(fullCols[j + 1].index) - px(c.index) - 2 * GAP - 12}
-            height={py(fullRows[i + 1].index) - py(r.index) - 2 * GAP - 12}
-            rx="3"
-            fill="#e9f4e4"
-            stroke="#b7d3b9"
-          />
-        )),
-      )}
+      {/* Manzanas en venta: entre calles enteras consecutivas, con el color de su barrio.
+          Las calles parciales (1½ Norte, etc.) cruzan por encima. */}
+      {lots
+        .filter((lot) => lot.kind === 'manzana')
+        .map((lot) => {
+          const r = fullRows[lot.cell.row];
+          const c = fullCols[lot.cell.col];
+          const x = px(c.index) + GAP + 6;
+          const y = py(r.index) + GAP + 6;
+          const w = px(fullCols[lot.cell.col + 1].index) - px(c.index) - 2 * GAP - 12;
+          const h = py(fullRows[lot.cell.row + 1].index) - py(r.index) - 2 * GAP - 12;
+          const color = BARRIO_COLORS[lot.barrio];
+          return (
+            <g
+              key={lot.id}
+              className="lot"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectLot(lot);
+              }}
+            >
+              <title>{lot.name}</title>
+              <rect x={x} y={y} width={w} height={h} rx="3" fill="#f3f8ee" stroke="#111" strokeWidth="1" />
+              <rect x={x} y={y} width={w} height="11" rx="2" fill={color} stroke="#111" strokeWidth="1" />
+              <text x={x + w / 2} y={y + h / 2 + 12} textAnchor="middle" className="icon-text lot-house">🏠</text>
+              {lot.id === selectedLotId && (
+                <rect x={x - 2} y={y - 2} width={w + 4} height={h + 4} rx="4" fill="none" stroke="#c4161c" strokeWidth="3" />
+              )}
+            </g>
+          );
+        })}
 
       {/* Rótulos de calles */}
       {board.verticalStreets.map((s) => (
@@ -199,12 +213,6 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
           >
             <title>{`${seg.name} (${trafficLabel(seg)})`}</title>
             <rect x={t.x} y={t.y} width={t.w} height={t.h} fill="#fbf7e8" stroke="#111" strokeWidth="1.5" />
-            {/* Franja de color, como en las propiedades del Monopoly */}
-            {t.w === TILE ? (
-              <rect x={t.x + 1} y={t.y + 1} width={TILE - 2} height={9} fill={GROUP_COLORS[seg.street.group]} stroke="#111" strokeWidth="0.8" />
-            ) : (
-              <rect x={t.x + 1} y={t.y + 1} width={9} height={TILE - 2} fill={GROUP_COLORS[seg.street.group]} stroke="#111" strokeWidth="0.8" />
-            )}
             {trafficMarker(seg, t)}
             {selected && (
               <rect x={t.x - 2} y={t.y - 2} width={t.w + 4} height={t.h + 4} fill="none" stroke="#c4161c" strokeWidth="3" />
@@ -231,7 +239,10 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
           >
             {lm && <title>{lm.name}</title>}
             <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} fill={corner ? '#fff6d6' : '#fffdf2'} stroke="#111" strokeWidth={corner ? 2.5 : 1.5} />
-            {lm && lm.id === selectedLandmarkId && (
+            {lm && !corner && (
+              <rect x={cx - size / 2} y={cy - size / 2} width={size} height="6" fill={barrioColorOf(lm)} stroke="#111" strokeWidth="1" />
+            )}
+            {lm && landmarkLotId(lm) === selectedLotId && (
               <rect x={cx - size / 2 - 2} y={cy - size / 2 - 2} width={size + 4} height={size + 4} fill="none" stroke="#c4161c" strokeWidth="3" />
             )}
             {corner ? (
@@ -248,15 +259,16 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
         );
       })}
 
-      {/* Edificios en manzanas y junto a tramos de calle */}
+      {/* Edificios que ocupan una manzana entera, o que están junto a un tramo de calle */}
       {landmarks
         .filter((l) => !Number.isInteger(l.row) || !Number.isInteger(l.col))
         .map((l) => {
           const cx = px(l.col);
           const cy = py(l.row);
-          const isPlaza = l.id === 'plaza-de-armas';
-          const halfW = isPlaza ? (px(l.col + 0.5) - px(l.col - 0.5)) / 2 - GAP - 6 : 15;
-          const halfH = isPlaza ? (py(l.row + 0.5) - py(l.row - 0.5)) / 2 - GAP - 6 : 15;
+          const wholeBlock = l.anchor.type === 'block';
+          const halfW = wholeBlock ? (px(l.col + 0.5) - px(l.col - 0.5)) / 2 - GAP - 6 : 15;
+          const halfH = wholeBlock ? (py(l.row + 0.5) - py(l.row - 0.5)) / 2 - GAP - 6 : 15;
+          const selected = landmarkLotId(l) === selectedLotId;
           return (
             <g key={l.id} className="landmark" onClick={landmarkClick(l)}>
               <title>{l.name}</title>
@@ -265,15 +277,18 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
                 y={cy - halfH}
                 width={halfW * 2}
                 height={halfH * 2}
-                rx={isPlaza ? 3 : 4}
-                fill={isPlaza ? '#7ec27e' : '#fff6d6'}
+                rx={wholeBlock ? 3 : 4}
+                fill={l.id === 'plaza-de-armas' ? '#7ec27e' : '#fff6d6'}
                 stroke="#111"
-                strokeWidth={l.id === selectedLandmarkId ? 3 : 1.5}
-                className={l.id === selectedLandmarkId ? 'landmark-selected' : undefined}
+                strokeWidth={selected ? 3 : 1.5}
               />
-              <text x={cx} y={cy + (isPlaza ? 9 : 7)} textAnchor="middle" className={isPlaza ? 'icon-text icon-big' : 'icon-text'}>
+              <rect x={cx - halfW} y={cy - halfH} width={halfW * 2} height={wholeBlock ? 11 : 6} fill={barrioColorOf(l)} stroke="#111" strokeWidth="1" />
+              <text x={cx} y={cy + (wholeBlock ? 12 : 8)} textAnchor="middle" className={wholeBlock ? 'icon-text icon-big' : 'icon-text'}>
                 {l.icon}
               </text>
+              {selected && (
+                <rect x={cx - halfW - 2} y={cy - halfH - 2} width={halfW * 2 + 4} height={halfH * 2 + 4} rx="5" fill="none" stroke="#c4161c" strokeWidth="3" />
+              )}
             </g>
           );
         })}

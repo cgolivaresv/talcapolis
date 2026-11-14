@@ -14,7 +14,8 @@ import { EXTRA_STREETS, STREET_POSITIONS_M } from './geometry';
  * "horizontal" = calles Norte/Sur (índice y). Son nombres del modelo, no de la pantalla:
  * la UI decide cómo proyectarlos.
  *
- * Cada TRAMO de calle entre dos intersecciones consecutivas es una casilla/propiedad.
+ * Cada TRAMO de calle entre dos intersecciones consecutivas es una casilla del recorrido.
+ * Las calles NO se compran: lo que se compra son los lotes (ver lots.ts).
  */
 
 export type Side = 'Poniente' | 'Oriente' | 'Norte' | 'Sur';
@@ -41,8 +42,6 @@ export interface Street {
   orientation: 'vertical' | 'horizontal';
   /** Posición en su eje: vertical => x; horizontal => y. */
   index: number;
-  /** Grupo de color estilo Monopoly (0-7), repartido a lo largo del eje de la calle. */
-  group: number;
   /** Posición real en metros desde el borde del tablero (ver geometry.ts). */
   positionM: number;
   /** Solo para calles parciales: tramo (en metros, eje transversal) donde la calle existe. */
@@ -52,7 +51,14 @@ export interface Street {
 /** Distancia típica entre calles (m), usada si una calle no tiene posición medida. */
 const DEFAULT_SPACING_M = 125;
 
-export const GROUP_COUNT = 8;
+/** Posición en metros de una coordenada de grilla (posible fraccionaria), interpolando entre calles. */
+export function lerpPositionM(streets: Street[], f: number): number {
+  const i = Math.min(Math.floor(f), streets.length - 1);
+  const t = f - i;
+  const a = streets[i].positionM;
+  const b = streets[Math.min(i + 1, streets.length - 1)].positionM;
+  return a + (b - a) * t;
+}
 
 export interface Intersection {
   id: string;
@@ -87,7 +93,7 @@ function verticalStreet(signed: number, index: number): Street {
   const side: Side = signed < 0 ? 'Poniente' : 'Oriente';
   const name = `${Math.abs(signed)} ${side}`;
   const id = slug(name);
-  return { id, name, orientation: 'vertical', index, group: 0, positionM: STREET_POSITIONS_M[id] ?? index * DEFAULT_SPACING_M };
+  return { id, name, orientation: 'vertical', index, positionM: STREET_POSITIONS_M[id] ?? index * DEFAULT_SPACING_M };
 }
 
 /** Convierte un valor con signo (Sur < 0, Norte > 0) a calle. */
@@ -95,7 +101,7 @@ function horizontalStreet(signed: number, index: number): Street {
   const side: Side = signed < 0 ? 'Sur' : 'Norte';
   const name = `${Math.abs(signed)} ${side}`;
   const id = slug(name);
-  return { id, name, orientation: 'horizontal', index, group: 0, positionM: STREET_POSITIONS_M[id] ?? index * DEFAULT_SPACING_M };
+  return { id, name, orientation: 'horizontal', index, positionM: STREET_POSITIONS_M[id] ?? index * DEFAULT_SPACING_M };
 }
 
 /** Rango de enteros con signo saltándose el 0 (no existe la calle "0"). */
@@ -130,7 +136,6 @@ export function buildBoard(config: BoardConfig = TALCAPOLIS_CONFIG): Board {
         name: e.name,
         orientation,
         index: 0,
-        group: 0,
         positionM: e.positionM,
         spanM: [Math.min(a.positionM, b.positionM), Math.max(a.positionM, b.positionM)] as [number, number],
       }];
@@ -140,7 +145,6 @@ export function buildBoard(config: BoardConfig = TALCAPOLIS_CONFIG): Board {
     list.sort((p, q) => p.positionM - q.positionM);
     list.forEach((s, i) => {
       s.index = i;
-      s.group = Math.floor((i * GROUP_COUNT) / list.length);
     });
     return list;
   };

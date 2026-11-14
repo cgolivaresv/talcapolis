@@ -1,11 +1,10 @@
-import type { Segment } from './board';
-import { baseRentOf } from './pricing';
+import { BARRIOS } from './barrios';
 
 /**
- * Qué se puede comprar en Talcapolis:
- *   1. Calles (tramos): ver pricing.ts.
- *   2. Edificios emblemáticos (landmarks): precio fijo y arriendo que crece al reunir de la misma clase.
- *   3. Casas y locales comerciales: se construyen sobre calles propias.
+ * Qué se compra en Talcapolis (las calles NO se compran):
+ *   1. Manzanas: una casa por manzana, ampliable hasta local comercial.
+ *   2. Edificios emblemáticos: precio fijo y arriendo que crece al reunir de la misma clase.
+ * Los lotes se agrupan por color en barrios (ver barrios.ts y lots.ts).
  */
 
 // --- Edificios emblemáticos -------------------------------------------------
@@ -58,24 +57,31 @@ export function landmarkRentOf(id: string, ownedOfSameKind = 1): number {
   return base * 2 ** Math.max(0, ownedOfSameKind - 1);
 }
 
-// --- Casas y locales comerciales sobre calles -------------------------------
+// --- Casas y locales comerciales en las manzanas ---------------------------
 
 /** 0 = sin construir; 1 a 4 = casas; 5 = local comercial (reemplaza a las 4 casas). */
 export const MAX_BUILDING_LEVEL = 5;
 export const BUILDING_LEVEL_NAME = ['Sin construir', '1 casa', '2 casas', '3 casas', '4 casas', 'Local comercial'] as const;
 
-/** Costo de construir un nivel (una casa, o el local comercial), según el grupo de color. */
-const BUILD_COST_BY_GROUP = [50, 50, 100, 100, 150, 150, 200, 200] as const;
-/** Arriendo = arriendo base de la calle × este factor, según el nivel. */
+/** Arriendo = arriendo base de la manzana × este factor, según el nivel. */
 const RENT_FACTOR = [1, 5, 15, 45, 80, 125] as const;
+/** Si el dueño tiene todo el barrio y la manzana no tiene construcción, el arriendo base se duplica. */
+export const BARRIO_COMPLETE_FACTOR = 2;
 
-export function buildCostOf(segment: Pick<Segment, 'street'>): number {
-  return BUILD_COST_BY_GROUP[segment.street.group];
+/** Costo de construir un nivel (una casa, o el local comercial) en un barrio. */
+export function buildCostOf(barrio: number): number {
+  return BARRIOS[barrio].buildCost;
 }
 
-export function rentAtLevel(segment: Segment, level: number): number {
+/** Arriendo base de una manzana: ~3% de su precio (mínimo $2), como en el Monopoly clásico. */
+export function baseRentOfManzana(price: number): number {
+  return Math.max(2, Math.round(price / 30));
+}
+
+export function manzanaRentAtLevel(price: number, level: number, ownsBarrio = false): number {
   if (!Number.isInteger(level) || level < 0 || level > MAX_BUILDING_LEVEL) {
     throw new Error(`Nivel de construcción inválido: ${level}`);
   }
-  return baseRentOf(segment) * RENT_FACTOR[level];
+  const bonus = level === 0 && ownsBarrio ? BARRIO_COMPLETE_FACTOR : 1;
+  return baseRentOfManzana(price) * RENT_FACTOR[level] * bonus;
 }

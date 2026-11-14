@@ -1,5 +1,4 @@
-import { describe, expect, it } from 'vitest';
-import { buildBoard } from './board';
+﻿import { describe, expect, it } from 'vitest';
 import { LANDMARKS } from './landmarks';
 import {
   LANDMARK_INFO,
@@ -7,7 +6,7 @@ import {
   buildCostOf,
   landmarkPriceOf,
   landmarkRentOf,
-  rentAtLevel,
+  manzanaRentAtLevel,
 } from './properties';
 
 describe('edificios emblemáticos', () => {
@@ -25,23 +24,23 @@ describe('edificios emblemáticos', () => {
 });
 
 describe('casas y locales comerciales', () => {
-  const board = buildBoard();
-  const seg = board.segments[0];
-
   it('el arriendo crece con cada nivel', () => {
-    const rents = Array.from({ length: MAX_BUILDING_LEVEL + 1 }, (_, l) => rentAtLevel(seg, l));
+    const rents = Array.from({ length: MAX_BUILDING_LEVEL + 1 }, (_, l) => manzanaRentAtLevel(100, l));
     for (let i = 1; i < rents.length; i++) expect(rents[i]).toBeGreaterThan(rents[i - 1]);
   });
 
-  it('rechaza niveles inválidos', () => {
-    expect(() => rentAtLevel(seg, 6)).toThrow();
-    expect(() => rentAtLevel(seg, -1)).toThrow();
-    expect(() => rentAtLevel(seg, 1.5)).toThrow();
+  it('tener todo el barrio duplica el arriendo de una manzana sin construir, y solo de esa', () => {
+    expect(manzanaRentAtLevel(100, 0, true)).toBe(2 * manzanaRentAtLevel(100, 0, false));
+    expect(manzanaRentAtLevel(100, 2, true)).toBe(manzanaRentAtLevel(100, 2, false));
   });
 
-  it('construir cuesta más en los grupos caros', () => {
-    const cheap = board.segments.find((s) => s.street.group === 0)!;
-    const dear = board.segments.find((s) => s.street.group === 7)!;
-    expect(buildCostOf(dear)).toBeGreaterThan(buildCostOf(cheap));
+  it('rechaza niveles inválidos', () => {
+    expect(() => manzanaRentAtLevel(100, 6)).toThrow();
+    expect(() => manzanaRentAtLevel(100, -1)).toThrow();
+    expect(() => manzanaRentAtLevel(100, 1.5)).toThrow();
+  });
+
+  it('construir cuesta más en los barrios caros', () => {
+    expect(buildCostOf(7)).toBeGreaterThan(buildCostOf(0));
   });
 });
