@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Board, Intersection, Segment } from '../engine/board';
+import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
 
 /** Colores de los grupos, como en el Monopoly clásico. */
 export const GROUP_COLORS = [
@@ -23,8 +24,11 @@ const CORNER = 52;
 
 interface Props {
   board: Board;
+  landmarks: PlacedLandmark[];
   selectedId: string | null;
+  selectedLandmarkId: string | null;
   onSelect: (segment: Segment | null) => void;
+  onSelectLandmark: (landmark: PlacedLandmark) => void;
 }
 
 /**
@@ -35,7 +39,7 @@ interface Props {
 const px = (col: number) => LEFT + col * S;
 const py = (row: number) => TOP + row * S;
 
-export function BoardView({ board, selectedId, onSelect }: Props) {
+export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, onSelect, onSelectLandmark }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   const width = LEFT + (cols - 1) * S + 70;
@@ -43,11 +47,19 @@ export function BoardView({ board, selectedId, onSelect }: Props) {
 
   const byId = useMemo(() => new Map(board.intersections.map((i) => [i.id, i])), [board]);
 
+  // Esquinas especiales (fila,columna). Estación = SALIDA; Corte de Apelaciones = CÁRCEL.
   const corners: Record<string, string[]> = {
-    [`0,0`]: ['SALIDA', '→'],
-    [`0,${cols - 1}`]: ['CÁRCEL', '⛓'],
-    [`${rows - 1},0`]: ['LIBRE', '🅿'],
+    [`0,0`]: ['LIBRE', '🅿'],
+    [`0,${cols - 1}`]: ['CÁRCEL', ''],
+    [`${rows - 1},0`]: ['SALIDA', ''],
     [`${rows - 1},${cols - 1}`]: ['A LA', 'CÁRCEL'],
+  };
+
+  const landmarkAtNode = (row: number, col: number) =>
+    landmarks.find((l) => l.row === row && l.col === col);
+  const landmarkClick = (l: PlacedLandmark) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelectLandmark(l);
   };
 
   const tile = (seg: Segment) => {
@@ -93,13 +105,19 @@ export function BoardView({ board, selectedId, onSelect }: Props) {
 
       {/* Rótulos de calles */}
       {board.verticalStreets.map((s) => (
-        <text key={s.id} x={LEFT - 38} y={py(s.index) + 4} textAnchor="end" className="axis-label">
+        <text key={s.id} x={LEFT - 38} y={py(s.index) + (STREET_ALIASES[s.id] ? 0 : 4)} textAnchor="end" className="axis-label">
           {s.name}
+          {STREET_ALIASES[s.id] && (
+            <tspan x={LEFT - 38} dy="10" className="axis-alias">{STREET_ALIASES[s.id]}</tspan>
+          )}
         </text>
       ))}
       {board.horizontalStreets.map((s) => (
-        <text key={s.id} x={px(s.index)} y={TOP - 38} textAnchor="middle" className="axis-label">
+        <text key={s.id} x={px(s.index)} y={TOP - (STREET_ALIASES[s.id] ? 48 : 38)} textAnchor="middle" className="axis-label">
           {s.name}
+          {STREET_ALIASES[s.id] && (
+            <tspan x={px(s.index)} dy="10" className="axis-alias">{STREET_ALIASES[s.id]}</tspan>
+          )}
         </text>
       ))}
 
@@ -135,23 +153,65 @@ export function BoardView({ board, selectedId, onSelect }: Props) {
       {board.intersections.map((n) => {
         const key = `${n.x},${n.y}`;
         const corner = corners[key];
+        const lm = landmarkAtNode(n.x, n.y);
         const cx = px(n.y);
         const cy = py(n.x);
         const size = corner ? CORNER : NODE;
+        const line2 = corner ? corner[1] || lm?.icon || '' : '';
         return (
-          <g key={n.id} pointerEvents="none">
+          <g
+            key={n.id}
+            pointerEvents={lm ? 'auto' : 'none'}
+            className={lm ? 'landmark' : undefined}
+            onClick={lm ? landmarkClick(lm) : undefined}
+          >
+            {lm && <title>{lm.name}</title>}
             <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} fill={corner ? '#fff6d6' : '#fffdf2'} stroke="#111" strokeWidth={corner ? 2.5 : 1.5} />
+            {lm && lm.id === selectedLandmarkId && (
+              <rect x={cx - size / 2 - 2} y={cy - size / 2 - 2} width={size + 4} height={size + 4} fill="none" stroke="#c4161c" strokeWidth="3" />
+            )}
             {corner ? (
               <>
                 <text x={cx} y={cy - 4} textAnchor="middle" className="corner-text">{corner[0]}</text>
-                <text x={cx} y={cy + 12} textAnchor="middle" className="corner-text">{corner[1]}</text>
+                <text x={cx} y={cy + 13} textAnchor="middle" className={line2.length <= 2 ? 'icon-text' : 'corner-text'}>{line2}</text>
               </>
+            ) : lm ? (
+              <text x={cx} y={cy + 7} textAnchor="middle" className="icon-text">{lm.icon}</text>
             ) : (
               <circle cx={cx} cy={cy} r="3" fill="#111" />
             )}
           </g>
         );
       })}
+
+      {/* Edificios en manzanas y junto a tramos de calle */}
+      {landmarks
+        .filter((l) => !Number.isInteger(l.row) || !Number.isInteger(l.col))
+        .map((l) => {
+          const cx = px(l.col);
+          const cy = py(l.row);
+          const isPlaza = l.id === 'plaza-de-armas';
+          const half = isPlaza ? (S - 2 * GAP - 12) / 2 : 15;
+          return (
+            <g key={l.id} className="landmark" onClick={landmarkClick(l)}>
+              <title>{l.name}</title>
+              <rect
+                x={cx - half}
+                y={cy - half}
+                width={half * 2}
+                height={half * 2}
+                rx={isPlaza ? 3 : 4}
+                fill={isPlaza ? '#7ec27e' : '#fff6d6'}
+                stroke="#111"
+                strokeWidth={l.id === selectedLandmarkId ? 3 : 1.5}
+                className={l.id === selectedLandmarkId ? 'landmark-selected' : undefined}
+              />
+              <text x={cx} y={cy + (isPlaza ? 9 : 7)} textAnchor="middle" className={isPlaza ? 'icon-text icon-big' : 'icon-text'}>
+                {l.icon}
+              </text>
+            </g>
+          );
+        })}
     </svg>
   );
 }

@@ -120,3 +120,35 @@
   margin: 8px 0;
   font-size: 0.9rem;
 }
+
+.axis-alias {
+  font-weight: 400;
+  font-size: 7.5px;
+  text-transform: none;
+  fill: #3b5a45;
+}
+
+.icon-text {
+  font: 16px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+}
+
+.icon-big {
+  font-size: 26px;
+}
+
+.landmark {
+  cursor: pointer;
+}
+
+.landmark:hover rect {
+  filter: brightness(1.08);
+}
+
+.landmark-band {
+  background: #fef200;
+}
+
+.landmark-icon {
+  font-size: 2rem;
+  letter-spacing: 0;
+}
