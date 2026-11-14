@@ -304,3 +304,102 @@
   font-size: 0.72rem;
   opacity: 0.75;
 }
+
+.turn {
+  width: 240px;
+  background: #fbf7e8;
+  border: 2px solid #111;
+  box-shadow: 4px 4px 0 #111;
+  padding: 10px;
+  color: #111;
+}
+
+.turn h2 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.roll-btn {
+  width: 100%;
+  padding: 10px;
+  font: 900 1rem 'Arial Black', Arial, sans-serif;
+  background: #fef200;
+  border: 2px solid #111;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.roll-btn:hover {
+  background: #ffe000;
+}
+
+.dice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.dice span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 7px;
+  font: 900 1.2rem Arial, sans-serif;
+}
+
+.turn-hint {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+}
+
+.players,
+.log {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 0.82rem;
+}
+
+.players li {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px;
+}
+
+.players li.active {
+  background: #fff1a8;
+}
+
+.log {
+  border-top: 1px solid #bbb;
+  padding-top: 6px;
+  color: #333;
+  display: grid;
+  gap: 3px;
+}
+
+.move-option {
+  cursor: pointer;
+}
+
+.move-option circle {
+  animation: pulse 1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+.token-text {
+  font: 900 9px Arial, sans-serif;
+  fill: #fff;
+  pointer-events: none;
+}

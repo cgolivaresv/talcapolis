@@ -15,6 +15,10 @@ Límites (configurables en `src/engine/board.ts`), tal como se ven en pantalla:
 
 Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 154 tramos sobre 88 intersecciones. **Las calles no se compran.**
 
+## Movimiento
+
+Cada jugador parte en la SALIDA (Estación). En su turno tira **dos dados** y avanza exactamente esa cantidad de **tramos de calle** (de intersección en intersección), respetando el **sentido del tránsito**. No se da media vuelta salvo que no haya otra salida. En cada intersección con varias salidas el jugador no elige paso a paso: el tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la Cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno); las casillas "?" sacan tarjeta. Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
+
 ## Qué se compra
 
 - **Lotes:** cada manzana se divide en 4 sitios, uno por cada calle que la rodea, así que a ambos lados de cada calle hay propiedades. Cada sitio es una casa, un local comercial (cuesta el doble) o un edificio emblemático. En total 240 lotes.

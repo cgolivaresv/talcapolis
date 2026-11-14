@@ -33,7 +33,12 @@ interface Props {
   selectedLotId: string | null;
   /** Intersecciones que son casillas "?". */
   cardSquares: Set<string>;
-  onCardSquare: (nodeId: string) => void;
+  onCardSquare?: (nodeId: string) => void;
+  /** Fichas de los jugadores. */
+  tokens?: { id: string; at: string; color: string; active: boolean }[];
+  /** Intersecciones a las que puede llegar el jugador en turno. */
+  options?: Set<string>;
+  onPickNode?: (nodeId: string) => void;
   /** Factor de zoom sobre el tamaño natural del tablero (1 = 1 px por unidad del dibujo). */
   zoom: number;
   onSelect: (segment: Segment | null) => void;
@@ -45,7 +50,7 @@ interface Props {
  *   fila    = índice de calle Oriente/Poniente (2 Poniente arriba, 11 Oriente abajo)
  *   columna = índice de calle Norte/Sur        (2 Sur a la izquierda, 4 Norte a la derecha)
  */
-export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, zoom, onSelect, onSelectLot }: Props) {
+export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
@@ -264,7 +269,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
               className="card-square"
               onClick={(e) => {
                 e.stopPropagation();
-                onCardSquare(n.id);
+                onCardSquare?.(n.id);
               }}
             >
               <title>Tarjeta ?</title>
@@ -335,6 +340,42 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             </g>
           );
         })}
+
+      {/* Destinos posibles del jugador en turno */}
+      {options &&
+        board.intersections
+          .filter((n) => options.has(n.id))
+          .map((n) => (
+            <g
+              key={`opt-${n.id}`}
+              className="move-option"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPickNode?.(n.id);
+              }}
+            >
+              <title>Avanzar hasta aquí</title>
+              <circle cx={px(n.y)} cy={py(n.x)} r="17" fill="rgba(254,242,0,0.35)" stroke="#c4161c" strokeWidth="3" strokeDasharray="5 3" />
+            </g>
+          ))}
+
+      {/* Fichas: si hay varias en una intersección se reparten alrededor */}
+      {tokens.map((t, k) => {
+        const n = byId.get(t.at);
+        if (!n) return null;
+        const mates = tokens.filter((o) => o.at === t.at);
+        const slot = mates.findIndex((o) => o.id === t.id);
+        const ang = (slot / Math.max(mates.length, 1)) * Math.PI * 2 - Math.PI / 2;
+        const off = mates.length > 1 ? 8 : 0;
+        const x = px(n.y) + Math.cos(ang) * off;
+        const y = py(n.x) + Math.sin(ang) * off;
+        return (
+          <g key={`tok-${k}`} pointerEvents="none" data-active-token={t.active ? '' : undefined}>
+            <circle cx={x} cy={y} r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? '#c4161c' : '#111'} strokeWidth={t.active ? 3 : 2} />
+            <text x={x} y={y + 3.5} textAnchor="middle" className="token-text">{t.id.slice(-1)}</text>
+          </g>
+        );
+      })}
     </svg>
   );
 }

@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
-import { applyCard, cardSquaresOf, createDeck, drawCard, type Card, type PlayerState } from './engine/cards';
+import { cardSquaresOf } from './engine/cards';
+import { moveTo, newGame, roll } from './engine/game';
 import { placeLandmarks } from './engine/landmarks';
 import { buildLots, lotsOfBarrio, lotsOfManzana, type Lot } from './engine/lots';
 import {
@@ -17,12 +18,8 @@ import { directionOf } from './engine/traffic';
 import { BARRIO_COLORS, BoardView } from './ui/BoardView';
 import './App.css';
 
-/** Jugadores de prueba, hasta que exista la partida: sirven para ver el efecto de las tarjetas. */
-const DEMO_PLAYERS: PlayerState[] = [
-  { id: 'Tú', money: 1500, at: '11-oriente/2-sur', inJail: false, freeJailCards: 0, ownedLotIds: [] },
-  { id: 'Jugador 2', money: 1500, at: '11-oriente/2-sur', inJail: false, freeJailCards: 0, ownedLotIds: [] },
-  { id: 'Jugador 3', money: 1500, at: '11-oriente/2-sur', inJail: false, freeJailCards: 0, ownedLotIds: [] },
-];
+const PLAYER_NAMES = ['Jugador 1', 'Jugador 2', 'Jugador 3'];
+const PLAYER_COLORS = ['#e8423a', '#2f7fd6', '#f2b90c'];
 
 const KIND_LABEL = { casa: 'Casa', local: 'Local comercial', emblematico: 'Edificio emblemático' } as const;
 
@@ -37,14 +34,19 @@ export default function App() {
   const [zoom, setZoom] = useState(0.75);
   const changeZoom = (delta: number) => setZoom((z) => Math.min(1.5, Math.max(0.3, +(z + delta).toFixed(2))));
 
-  const [deck, setDeck] = useState(() => createDeck(2026));
-  const [players, setPlayers] = useState(DEMO_PLAYERS);
-  const [drawn, setDrawn] = useState<{ card: Card; summary: string } | null>(null);
+  const [game, setGame] = useState(() => newGame(PLAYER_NAMES, 2026));
+  const ctx = useMemo(() => ({ board, landmarks, cardSquares }), [board, landmarks, cardSquares]);
+  const options = useMemo(() => new Set(game.options.map((d) => d.node)), [game.options]);
+  const turnOf = game.players[game.current];
+
+  // Lleva la vista hasta la ficha del jugador en turno (el tablero es más alto que la pantalla).
+  useEffect(() => {
+    document.querySelector('[data-active-token]')?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+  }, [game.current, game.players]);
 
   const clearSelection = () => {
     setStreet(null);
     setLot(null);
-    setDrawn(null);
   };
   const selectStreet = (s: Segment | null) => {
     clearSelection();
@@ -54,18 +56,8 @@ export default function App() {
     clearSelection();
     setLot(l);
   };
-  /** Cae en una casilla "?": el jugador de prueba saca la siguiente tarjeta y se ejecuta. */
-  const drawFromSquare = (nodeId: string) => {
-    const { card, deck: next } = drawCard(deck);
-    const [me, ...others] = players;
-    const result = applyCard(card, { ...me, at: nodeId }, others, { board, landmarks });
-    setDeck(next);
-    setPlayers([result.player, ...result.others]);
-    clearSelection();
-    setDrawn({ card, summary: result.summary });
-  };
 
-  const barrio = lot ? BARRIOS[lot.barrio] : null;
+    const barrio = lot ? BARRIOS[lot.barrio] : null;
   const barrioLots = lot ? lotsOfBarrio(lots, lot.barrio) : [];
   const manzanaLots = lot ? lotsOfManzana(lots, lot.manzanaId) : [];
   const lm = lot?.landmarkId ? landmarks.find((l) => l.id === lot.landmarkId) : undefined;
@@ -94,7 +86,9 @@ export default function App() {
               selectedId={street?.id ?? null}
               selectedLotId={lot?.id ?? null}
               cardSquares={cardSquares}
-              onCardSquare={drawFromSquare}
+              tokens={game.players.map((p, k) => ({ id: p.id, at: p.at, color: PLAYER_COLORS[k], active: k === game.current }))}
+              options={options}
+              onPickNode={(node) => setGame((g) => moveTo(g, node, ctx))}
               zoom={zoom}
               onSelect={selectStreet}
               onSelectLot={selectLot}
@@ -103,25 +97,42 @@ export default function App() {
         </div>
 
         <div className="side">
+          <section className="turn" aria-live="polite">
+            <h2>
+              Turno de <span style={{ color: PLAYER_COLORS[game.current] }}>●</span> {turnOf.id}
+              {turnOf.inJail ? ' (preso)' : ''}
+            </h2>
+            {game.dice ? (
+              <p className="dice">
+                <span>{game.dice[0]}</span>
+                <span>{game.dice[1]}</span>
+                <em>= {game.dice[0] + game.dice[1]} tramos</em>
+              </p>
+            ) : null}
+            {game.options.length > 0 ? (
+              <p className="turn-hint">Toca una intersección marcada para avanzar ({game.options.length} destinos).</p>
+            ) : (
+              <button type="button" className="roll-btn" onClick={() => setGame((g) => roll(g, board))}>
+                Tirar dados
+              </button>
+            )}
+            <ul className="players">
+              {game.players.map((p, k) => (
+                <li key={p.id} className={k === game.current ? 'active' : undefined}>
+                  <span style={{ color: PLAYER_COLORS[k] }}>●</span> {p.id}
+                  <strong>${p.money}</strong>
+                </li>
+              ))}
+            </ul>
+            <ol className="log" reversed>
+              {game.log.slice(-6).reverse().map((l, k) => (
+                <li key={game.log.length - k}>{l}</li>
+              ))}
+            </ol>
+          </section>
+
           <aside className="deed" aria-live="polite">
-            {drawn ? (
-              <>
-                <div className="deed-band card-band">
-                  <span>TARJETA</span>
-                  <strong className="card-q">?</strong>
-                </div>
-                <p className="deed-between">{drawn.card.text}</p>
-                <p className="deed-barrio">{drawn.summary}</p>
-                <dl>
-                  {players.map((p) => (
-                    <div key={p.id} className="player-row">
-                      <dt>{p.id}</dt>
-                      <dd>${p.money}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </>
-            ) : lot && barrio ? (
+            {lot && barrio ? (
               <>
                 <div className="deed-band" style={{ background: BARRIO_COLORS[lot.barrio] }}>
                   <span>
