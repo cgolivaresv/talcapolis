@@ -3,7 +3,7 @@ import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
 import { cardSquaresOf } from './engine/cards';
-import { moveTo, newGame, roll } from './engine/game';
+import { buy, moveTo, newGame, roll, skipBuy } from './engine/game';
 import { placeLandmarks } from './engine/landmarks';
 import { buildLots, lotsOfBarrio, lotsOfManzana, type Lot } from './engine/lots';
 import {
@@ -35,9 +35,14 @@ export default function App() {
   const changeZoom = (delta: number) => setZoom((z) => Math.min(1.5, Math.max(0.3, +(z + delta).toFixed(2))));
 
   const [game, setGame] = useState(() => newGame(PLAYER_NAMES, 2026));
-  const ctx = useMemo(() => ({ board, landmarks, cardSquares }), [board, landmarks, cardSquares]);
+  const ctx = useMemo(() => ({ board, landmarks, lots, cardSquares }), [board, landmarks, lots, cardSquares]);
   const options = useMemo(() => new Set(game.options.map((d) => d.node)), [game.options]);
   const turnOf = game.players[game.current];
+  const ownerColors = useMemo(
+    () => Object.fromEntries(Object.entries(game.owners).map(([id, o]) => [id, PLAYER_COLORS[o]])),
+    [game.owners],
+  );
+  const buyLots = game.buyOptions.map((id) => lots.find((l) => l.id === id)!);
 
   // Lleva la vista hasta la ficha del jugador en turno (el tablero es más alto que la pantalla).
   useEffect(() => {
@@ -88,6 +93,7 @@ export default function App() {
               cardSquares={cardSquares}
               tokens={game.players.map((p, k) => ({ id: p.id, at: p.at, color: PLAYER_COLORS[k], active: k === game.current }))}
               options={options}
+              ownerColors={ownerColors}
               onPickNode={(node) => setGame((g) => moveTo(g, node, ctx))}
               zoom={zoom}
               onSelect={selectStreet}
@@ -109,7 +115,25 @@ export default function App() {
                 <em>= {game.dice[0] + game.dice[1]} tramos</em>
               </p>
             ) : null}
-            {game.options.length > 0 ? (
+            {game.winner !== null ? (
+              <p className="turn-hint">
+                <strong>¡{game.players[game.winner].id} gana la partida!</strong>
+              </p>
+            ) : game.buyOptions.length > 0 ? (
+              <div className="buy">
+                <p className="turn-hint">Puedes comprar un lote de aquí:</p>
+                {buyLots.map((l) => (
+                  <button key={l.id} type="button" className="buy-btn" onClick={() => setGame((g) => buy(g, l.id, lots))} onMouseEnter={() => selectLot(l)}>
+                    <span className="swatch" style={{ background: BARRIO_COLORS[l.barrio] }} />
+                    {l.kind === 'emblematico' ? l.name : `${KIND_LABEL[l.kind]} · ${l.frontStreetName}`}
+                    <strong>${l.price}</strong>
+                  </button>
+                ))}
+                <button type="button" className="skip-btn" onClick={() => setGame((g) => skipBuy(g))}>
+                  No comprar
+                </button>
+              </div>
+            ) : game.options.length > 0 ? (
               <p className="turn-hint">Toca una intersección marcada para avanzar ({game.options.length} destinos).</p>
             ) : (
               <button type="button" className="roll-btn" onClick={() => setGame((g) => roll(g, board))}>
@@ -120,6 +144,7 @@ export default function App() {
               {game.players.map((p, k) => (
                 <li key={p.id} className={k === game.current ? 'active' : undefined}>
                   <span style={{ color: PLAYER_COLORS[k] }}>●</span> {p.id}
+                  {game.bankrupt[k] ? ' (quebró)' : ''} <small>{p.ownedLotIds.length} lotes</small>
                   <strong>${p.money}</strong>
                 </li>
               ))}
@@ -147,6 +172,9 @@ export default function App() {
                 <p className="deed-barrio">
                   <span className="swatch" style={{ background: BARRIO_COLORS[lot.barrio] }} /> {barrio.name}
                 </p>
+                {game.owners[lot.id] !== undefined && (
+                  <p className="deed-barrio">Dueño: <span style={{ color: PLAYER_COLORS[game.owners[lot.id]] }}>●</span> {game.players[game.owners[lot.id]].id}</p>
+                )}
                 <dl>
                   <dt>Precio</dt>
                   <dd>${lot.price}</dd>

@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { buildBoard } from './board';
 import { cardSquaresOf } from './cards';
-import { moveTo, newGame, roll } from './game';
+import { buy, moveTo, newGame, roll, skipBuy } from './game';
+import { buildLots } from './lots';
 import { placeLandmarks } from './landmarks';
 import { START_NODE, destinations, rollDice } from './movement';
 import { canEnter, legalMoves } from './traffic';
 
 const board = buildBoard();
 const landmarks = placeLandmarks(board);
-const ctx = { board, landmarks, cardSquares: cardSquaresOf(board, landmarks) };
+const lots = buildLots(board, landmarks);
+const ctx = { board, landmarks, lots, cardSquares: cardSquaresOf(board, landmarks) };
 
 describe('movimiento por las calles', () => {
   it('cada recorrido avanza exactamente N tramos, respetando el sentido', () => {
@@ -57,6 +59,7 @@ describe('turnos', () => {
     const dest = g.options[0].node;
     const double = g.dice![0] === g.dice![1];
     g = moveTo(g, dest, ctx);
+    if (g.buyOptions.length > 0) g = skipBuy(g);
     expect(g.players[0].at === dest || g.players[0].at !== START_NODE).toBe(true);
     expect(g.current).toBe(double ? 0 : 1);
     expect(g.options).toHaveLength(0);
@@ -69,7 +72,10 @@ describe('turnos', () => {
       if (g.options.length > 0) {
         const pick = g.options[k % g.options.length];
         g = moveTo(g, pick.node, ctx);
+        if (g.buyOptions.length > 0) g = k % 2 ? buy(g, g.buyOptions[0], lots) : skipBuy(g);
       }
+      for (const p of g.players) expect(p.money).toBeGreaterThanOrEqual(0);
+      for (const [id, o] of Object.entries(g.owners)) expect(g.players[o].ownedLotIds).toContain(id);
       for (const p of g.players) expect(board.intersections.some((n) => n.id === p.at)).toBe(true);
     }
   });

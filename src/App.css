@@ -403,3 +403,40 @@
   fill: #fff;
   pointer-events: none;
 }
+
+.buy {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.buy-btn,
+.skip-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+  font: 600 0.74rem Arial, sans-serif;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid #111;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.buy-btn strong {
+  margin-left: auto;
+}
+
+.buy-btn:hover {
+  background: #fff1a8;
+}
+
+.skip-btn {
+  justify-content: center;
+  background: #eee;
+}
+
+.players small {
+  opacity: 0.6;
+}

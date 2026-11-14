@@ -19,6 +19,16 @@ Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 1
 
 Cada jugador parte en la SALIDA (Estación). En su turno tira **dos dados** y avanza exactamente esa cantidad de **tramos de calle** (de intersección en intersección), respetando el **sentido del tránsito**. No se da media vuelta salvo que no haya otra salida. En cada intersección con varias salidas el jugador no elige paso a paso: el tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la Cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno); las casillas "?" sacan tarjeta. Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
 
+## Compra y arriendo
+
+Al caer en una intersección, los **lotes que dan a ella** (de las 4 manzanas que la rodean, los sitios que miran a cualquiera de las dos calles que se cruzan: hasta 8) son los que importan:
+
+- Los que están **libres** se pueden comprar, uno por visita, si alcanza la plata (o se pasa).
+- Por los que tienen **dueño ajeno** se paga arriendo, uno por lote (12% del precio; ×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio). Los edificios emblemáticos cobran el 10% de su precio y se duplica por cada otro de la misma clase.
+- Quien no puede pagar **quiebra**: sus lotes vuelven a quedar libres y sale de la partida. Gana el último que queda.
+
+La lógica está en `src/engine/economy.ts`.
+
 ## Qué se compra
 
 - **Lotes:** cada manzana se divide en 4 sitios, uno por cada calle que la rodea, así que a ambos lados de cada calle hay propiedades. Cada sitio es una casa, un local comercial (cuesta el doble) o un edificio emblemático. En total 240 lotes.

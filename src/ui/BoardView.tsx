@@ -39,6 +39,8 @@ interface Props {
   /** Intersecciones a las que puede llegar el jugador en turno. */
   options?: Set<string>;
   onPickNode?: (nodeId: string) => void;
+  /** Color del dueño de cada lote comprado. */
+  ownerColors?: Record<string, string>;
   /** Factor de zoom sobre el tamaño natural del tablero (1 = 1 px por unidad del dibujo). */
   zoom: number;
   onSelect: (segment: Segment | null) => void;
@@ -50,7 +52,7 @@ interface Props {
  *   fila    = índice de calle Oriente/Poniente (2 Poniente arriba, 11 Oriente abajo)
  *   columna = índice de calle Norte/Sur        (2 Sur a la izquierda, 4 Norte a la derecha)
  */
-export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, zoom, onSelect, onSelectLot }: Props) {
+export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, ownerColors = {}, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
@@ -202,6 +204,9 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                       strokeWidth="1"
                     />
                     <line x1={sh.edge[0]} y1={sh.edge[1]} x2={sh.edge[2]} y2={sh.edge[3]} stroke={BARRIO_COLORS[lot.barrio]} strokeWidth="7" />
+                    {ownerColors[lot.id] && (
+                      <circle cx={ix} cy={iy - 9} r="5" fill={ownerColors[lot.id]} stroke="#111" strokeWidth="1.5" />
+                    )}
                     <text x={ix} y={iy + 5} textAnchor="middle" className="icon-text lot-house">{icon}</text>
                     {selected && <polygon points={sh.pts} fill="none" stroke="#c4161c" strokeWidth="3" />}
                   </g>
