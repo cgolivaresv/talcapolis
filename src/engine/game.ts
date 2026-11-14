@@ -33,6 +33,8 @@ export interface Game {
   /** Intersección de la que venía cada jugador (para no dar media vuelta). */
   cameFrom: (string | null)[];
   jailTurns: number[];
+  /** Turnos que cada jugador perderá (por una acción de la ciudad). */
+  skipTurns: number[];
   /** Dueño de cada lote comprado. */
   owners: Owners;
   /** Lotes que el jugador en turno puede comprar donde cayó; vacío si no hay decisión pendiente. */
@@ -67,6 +69,7 @@ export function newGame(names: string[], seed: number): Game {
     options: [],
     cameFrom: names.map(() => null),
     jailTurns: names.map(() => 0),
+    skipTurns: names.map(() => 0),
     owners: {},
     buyOptions: [],
     rollAgain: false,
@@ -83,15 +86,26 @@ const replace = <T>(list: T[], i: number, v: T) => list.map((x, k) => (k === i ?
 function endTurn(g: Game): Game {
   const n = g.players.length;
   let next = g.current;
-  do next = (next + 1) % n;
-  while (g.bankrupt[next] && next !== g.current);
-  return { ...g, current: next, dice: null, options: [], buyOptions: [], rollAgain: false };
+  let skipTurns = g.skipTurns;
+  let log = g.log;
+  // Quien debe perder el turno lo pierde y pasa al siguiente.
+  for (let guard = 0; guard < n * 8; guard++) {
+    do next = (next + 1) % n;
+    while (g.bankrupt[next] && next !== g.current);
+    if (skipTurns[next] > 0) {
+      skipTurns = replace(skipTurns, next, skipTurns[next] - 1);
+      log = [...log, `${g.players[next].id} pierde este turno.`];
+      continue;
+    }
+    break;
+  }
+  return { ...g, current: next, skipTurns, log, dice: null, options: [], buyOptions: [], rollAgain: false };
 }
 
 /** Termina el turno actual, o repite si salieron dobles. */
 function finishTurn(g: Game): Game {
   if (g.rollAgain && !g.bankrupt[g.current] && !g.players[g.current].inJail) {
-    return { ...g, dice: null, options: [], buyOptions: [], rollAgain: false, log: [...g.log, `${g.players[g.current].id} tira de nuevo por los dobles.`] };
+    return { ...g, dice: null, options: [], buyOptions: [], rollAgain: false, log: [...g.log, `${g.players[g.current].id} tira de nuevo.`] };
   }
   return endTurn(g);
 }
@@ -161,6 +175,9 @@ export function moveTo(game: Game, square: string, ctx: GameContext): Game {
   let others = game.players.filter((_, k) => k !== i);
   let deck = game.deck;
   let seed = game.seed;
+  let skipTurns = game.skipTurns;
+  let loseTurn = false;
+  let extraRoll = false;
   const log = [...game.log];
   let newCameFrom: string | null = cameFromAfter(dest, game.cameFrom[i]);
 
@@ -187,14 +204,27 @@ export function moveTo(game: Game, square: string, ctx: GameContext): Game {
         break;
       }
       case 'random': {
-        // Acciones aleatorias: todavía sin definir (ver RANDOM_ACTIONS en actions.ts).
-        if (RANDOM_ACTIONS.length > 0) {
-          const [u, next] = nextRandom(seed);
-          seed = next;
-          const action = RANDOM_ACTIONS[Math.floor(u * RANDOM_ACTIONS.length)];
-          me = { ...me, money: me.money + action.money };
-          log.push(`${me.id} cae en una casilla de acción: ${action.text}`);
+        // Acción aleatoria de la ciudad (ver RANDOM_ACTIONS en actions.ts).
+        const [u, next] = nextRandom(seed);
+        seed = next;
+        const action = RANDOM_ACTIONS[Math.floor(u * RANDOM_ACTIONS.length)];
+        const effect = action.effect;
+        let summary: string;
+        if (effect.type === 'loseTurn') {
+          skipTurns = replace(skipTurns, i, skipTurns[i] + 1);
+          loseTurn = true;
+          summary = 'Pierdes el próximo turno.';
+        } else if (effect.type === 'extraTurn') {
+          extraRoll = true;
+          summary = 'Tiras de nuevo.';
+        } else {
+          const res = applyCard({ id: action.id, text: action.text, action: effect }, me, others, ctx);
+          me = res.player;
+          others = res.others;
+          summary = res.summary;
+          if (me.at !== square) newCameFrom = null;
         }
+        log.push(`${me.id} cae en una casilla de acción: «${action.text}» ${summary}`);
         break;
       }
       default:
@@ -227,10 +257,11 @@ export function moveTo(game: Game, square: string, ctx: GameContext): Game {
     deck,
     seed,
     log,
+    skipTurns,
     cameFrom: replace(game.cameFrom, i, newCameFrom),
     dice: null,
     options: [],
-    rollAgain: double && !me.inJail,
+    rollAgain: (double || extraRoll) && !loseTurn && !me.inJail,
   };
 
   // Sin plata para pagar lo que debe (arriendos, tarjetas o acciones): quiebra.

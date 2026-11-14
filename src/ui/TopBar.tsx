@@ -9,10 +9,13 @@ interface Props {
   totalLots: number;
   barrios: number;
   onNewGame: () => void;
+  onHelp: () => void;
+  soundOn: boolean;
+  onToggleSound: () => void;
 }
 
 /** Barra superior: identidad, jugador en turno y menú de la partida. */
-export function TopBar({ game, totalLots, barrios, onNewGame }: Props) {
+export function TopBar({ game, totalLots, barrios, onNewGame, onHelp, soundOn, onToggleSound }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const menu = useExit(menuOpen);
@@ -68,6 +71,19 @@ export function TopBar({ game, totalLots, barrios, onNewGame }: Props) {
         </button>
         {menu.mounted && (
           <div className="menu-list" role="menu" data-open={menu.open}>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onHelp();
+              }}
+            >
+              Cómo se juega
+            </button>
+            <button type="button" role="menuitemcheckbox" aria-checked={soundOn} onClick={onToggleSound}>
+              Sonido: {soundOn ? 'activado' : 'desactivado'}
+            </button>
             <button type="button" role="menuitem" className={confirm ? 'danger' : undefined} onClick={() => (confirm ? onNewGame() : setConfirm(true))}>
               {confirm ? '¿Seguro? Se pierde la partida' : 'Nueva partida'}
             </button>

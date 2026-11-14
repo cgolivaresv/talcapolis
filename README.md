@@ -25,7 +25,7 @@ Todas las intersecciones son casillas de acción (`src/engine/actions.ts`):
 
 - **"?"** (10 casillas): sacan una tarjeta con una acción.
 - **Esquinas del tablero:** SALIDA (solo se cobra al pasar), LIBRE (sin efecto), CÁRCEL (de visita) y "A LA CÁRCEL" (va preso).
-- **Resto:** acción aleatoria. **Todavía no hay acciones definidas**: la lista `RANDOM_ACTIONS` está vacía y esas casillas no tienen efecto. Agregar una acción es sumar un elemento a esa lista.
+- **Resto:** acción aleatoria de la ciudad (`RANDOM_ACTIONS`, 10 eventos): cobrar o pagar una suma pequeña, cobrar de cada jugador, caminar hasta la Catedral o el Mercado Central, **perder el próximo turno** o **tirar de nuevo**. Se elige con la semilla de la partida. Para agregar una basta con sumarla a la lista.
 
 Los edificios emblemáticos que están dibujados en una intersección siguen en su lugar; el lote se compra desde un tramo de calle de su manzana.
 
@@ -34,10 +34,29 @@ Los edificios emblemáticos que están dibujados en una intersección siguen en 
 Al caer en un **tramo de calle**, los **lotes que dan a él** son los sitios de las manzanas de ambos lados que miran a esa calle (**hasta 2**, o 1 en una calle del borde del tablero):
 
 - Los que están **libres** se pueden comprar, uno por visita, si alcanza la plata (o se pasa).
-- Entre los que tienen **dueño ajeno** se paga solo el arriendo del **sitio más caro** (12% del precio; ×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio). Los edificios emblemáticos cobran el 10% de su precio y se duplica por cada otro de la misma clase.
+- Entre los que tienen **dueño ajeno** se paga solo el arriendo del **sitio más caro**: el **doble del precio** en casas y locales (×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio) y 1,6 veces el precio en edificios emblemáticos, que se duplica por cada otro de la misma clase. Parece mucho, pero cada tramo se pisa muy pocas veces por partida (ver "Equilibrio").
 - Quien no puede pagar **quiebra**: sus lotes vuelven a quedar libres y sale de la partida. Gana el último que queda.
 
 La lógica está en `src/engine/economy.ts`.
+
+## Equilibrio
+
+`src/engine/simulate.ts` juega partidas completas con jugadores automáticos para medir el equilibrio. Para correr un resumen:
+
+```
+SIM_GAMES=300 SIM_PLAYERS=4 npx vitest run src/engine/simulate.test.ts
+```
+
+(opcionales: `SIM_POLICY=random|smart`, `SIM_RESERVE=250`, la plata que el jugador automático no gasta al comprar).
+
+Lo que mostró, con 4 jugadores:
+
+- Con el tablero actual (215 casillas) cada lote se pisa ~1,3 veces por partida. Con un arriendo del 12% del precio la renta casi no circulaba (≈$140 por partida frente a ≈$5.700 gastados en comprar), la partida se decidía por los pagos al banco y duraba una mediana de **100 tiradas por jugador**.
+- Subiendo el arriendo al doble del precio un lote se paga solo en unas 35 rondas, la renta pasa a ser el motor del juego y la mediana baja a **~60 tiradas por jugador** (p90 ≈ 85). Jugadores más cautelosos alargan la partida.
+- No hay ventaja por el asiento (con 2, 4 y 6 jugadores las victorias se reparten parejo), las partidas siempre terminan, y se venden entre el 10% (2 jugadores) y el 26% (6) de los lotes.
+- Bajar el dinero inicial **no** acorta las partidas (se compran menos lotes y hay menos arriendos).
+
+Una partida de 4 jugadores son unas 240 tiradas. Para acortarla de verdad habría que cobrar arriendo también al **pasar** por un tramo, o achicar el tablero.
 
 ## Qué se compra
 
@@ -72,6 +91,13 @@ Antes de tirar los dados, el jugador en turno puede proponer un intercambio a ot
 Paleta y tipografías del set «Edición Arquitectónica Talca» (Esmeralda Mate `#144E3A`, Cobre Cepillado `#C68B66`, Crema Alabastro `#F5F1E8`, Pizarra Carbón `#222629`, Oro Champagne `#D4AF37`), con Montserrat (títulos) e Inter (texto), servidas desde el propio proyecto (`@fontsource`). Los 8 colores de barrio siguen los grupos de la guía de estilo. Los tokens están en `src/index.css` y los colores del tablero en `src/ui/BoardView.tsx`.
 
 Los gráficos SVG (casa, mercado, catedral, plaza, teatro, tren, banco, estrella de tarjetas) están en `src/assets/graficos/` y se asignan en `src/ui/glyphs.ts`: casa para las casas, mercado para los locales comerciales y uno por edificio emblemático. `service-electricity.svg`, `service-water.svg` y `hotel.svg` (usado para universidades y liceos) quedan disponibles; los servicios aún no existen en el juego.
+
+## Ayudas de la interfaz
+
+- **Tutorial:** se muestra la primera vez (y desde el menú, en "Cómo se juega").
+- **Recorrido animado:** la ficha pasa por las casillas del camino elegido.
+- **Sonido opcional:** efectos sintetizados (sin archivos), desactivados por defecto; se activan desde el menú.
+- **App instalable (PWA):** se puede instalar en escritorio o móvil y abrir sin conexión una vez cargada (`vite-plugin-pwa`; íconos en `public/`).
 
 ## Interfaz premium
 

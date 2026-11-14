@@ -47,19 +47,29 @@ export function landmarkPriceOf(id: string): number {
 }
 
 /**
- * Arriendo de un edificio: 10% del precio, y se duplica por cada otro edificio de la misma
- * clase que tenga el mismo dueño (como los ferrocarriles del Monopoly).
+ * Arriendo de un edificio emblemático, como fracción de su precio. Es alto porque el tablero tiene
+ * muchas casillas (215) y cada lote se pisa pocas veces por partida: con estos valores un lote se
+ * paga solo en unas 35 rondas (calibrado con src/engine/simulate.ts).
+ */
+export const LANDMARK_RENT_RATE = 1.6;
+
+/**
+ * Arriendo de un edificio: una fracción de su precio, que se duplica por cada otro edificio de la
+ * misma clase que tenga el mismo dueño (como los ferrocarriles del Monopoly).
  */
 export function landmarkRentOf(id: string, ownedOfSameKind = 1): number {
-  const base = Math.round(LANDMARK_INFO[id].price / 10);
+  const base = Math.round(LANDMARK_INFO[id].price * LANDMARK_RENT_RATE);
   return base * 2 ** Math.max(0, ownedOfSameKind - 1);
 }
 
 // --- Arriendo de casas y locales -------------------------------------------
 
-/** Arriendo = 12% del precio (mínimo $2). El local comercial paga más porque cuesta el doble. */
+/** Arriendo de una casa o un local, como fracción de su precio (ver la nota de LANDMARK_RENT_RATE). */
+export const LOT_RENT_RATE = 2;
+
+/** Arriendo = fracción del precio (mínimo $2). El local comercial paga más porque cuesta el doble. */
 export function baseRentOfLot(price: number): number {
-  return Math.max(2, Math.round(price * 0.12));
+  return Math.max(2, Math.round(price * LOT_RENT_RATE));
 }
 
 /** Factor si el dueño tiene los 4 sitios de la manzana. */

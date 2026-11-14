@@ -126,3 +126,60 @@ export function useDrawnCard(log: string[]): DrawnCardInfo | null {
   }, [log]);
   return card;
 }
+
+/** Recorrido que acaba de elegir un jugador: lo guarda la interfaz para animar la ficha por las calles. */
+export interface Trail {
+  player: number;
+  path: string[];
+  key: number;
+}
+
+const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Posición que se muestra de cada ficha. Cuando un jugador se mueve, la ficha pasa por cada casilla del
+ * recorrido que se eligió (en vez de cruzar en línea recta) y termina en la posición real del juego.
+ * Es solo presentación: el estado del juego ya tiene la posición final.
+ */
+export function useShownPositions(ats: string[], trail: Trail | null, onStep?: () => void, stepMs = 150): string[] {
+  const [shown, setShown] = useState(ats);
+  const shownRef = useRef(ats);
+  const handled = useRef(0);
+  const timers = useRef<number[]>([]);
+  const atsKey = ats.join('|');
+  const stepRef = useRef(onStep);
+  stepRef.current = onStep;
+
+  useEffect(() => {
+    const target = atsKey.split('|');
+    const commit = (next: string[]) => {
+      shownRef.current = next;
+      setShown(next);
+    };
+    const changed = target.findIndex((a, k) => a !== shownRef.current[k]);
+    if (changed < 0) return;
+    const path = trail && trail.key !== handled.current && trail.player === changed ? trail.path.slice(1) : null;
+    if (!path || path.length === 0 || prefersReducedMotion()) {
+      commit(target);
+      return;
+    }
+    handled.current = trail!.key;
+    timers.current.forEach((t) => window.clearTimeout(t));
+    timers.current = path.map((square, n) =>
+      window.setTimeout(() => {
+        commit(shownRef.current.map((s, k) => (k === changed ? square : s)));
+        stepRef.current?.();
+      }, (n + 1) * stepMs),
+    );
+    // Al final la ficha queda en la posición real del juego (por si una tarjeta la movió después).
+    timers.current.push(window.setTimeout(() => commit(target), (path.length + 1) * stepMs));
+  }, [atsKey, trail, stepMs]);
+
+  useEffect(
+    () => () => {
+      timers.current.forEach((t) => window.clearTimeout(t));
+    },
+    [],
+  );
+  return shown;
+}

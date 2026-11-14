@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
@@ -11,15 +11,17 @@ import { BarriosPanel } from './ui/BarriosPanel';
 import { BoardView } from './ui/BoardView';
 import { PLAYER_COLORS } from './ui/colors';
 import { DrawnCard } from './ui/DrawnCard';
-import { useDrawnCard, useElementSize, useExit, useMediaQuery, useToasts } from './ui/hooks';
+import { useDrawnCard, useElementSize, useExit, useMediaQuery, useShownPositions, useToasts, type Trail } from './ui/hooks';
 import { LogPanel } from './ui/LogPanel';
 import { Modal } from './ui/Modal';
 import { PlayersPanel } from './ui/PlayersPanel';
 import { PropertyCard } from './ui/PropertyCard';
 import { SetupScreen } from './ui/SetupScreen';
+import { loadSoundPreference, playSound, setSoundEnabled, soundForLog } from './ui/sound';
 import { Toasts } from './ui/Toasts';
 import { TopBar } from './ui/TopBar';
 import { TradePanel } from './ui/TradePanel';
+import { Tutorial, tutorialSeen } from './ui/Tutorial';
 
 type SheetName = 'players' | 'property' | 'barrios' | 'log';
 
@@ -42,6 +44,9 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
     [game.owners],
   );
   const [trading, setTrading] = useState(false);
+  const [tutorial, setTutorial] = useState(() => !tutorialSeen());
+  const [soundOn, setSoundOn] = useState(loadSoundPreference);
+  const [trail, setTrail] = useState<Trail | null>(null);
 
   // --- Presentación: pantalla, paneles desplegables, avisos y tarjeta sacada ---
   const compact = useMediaQuery('(max-width: 899px)');
@@ -70,8 +75,27 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
   const boxW = Math.floor(Math.min(vb.w * zoom, stage.w - 2 * FRAME));
   const boxH = Math.floor(Math.min(vb.h * zoom, stage.h - 2 * FRAME));
 
+  // Posición que se muestra de cada ficha: pasa por las casillas del recorrido elegido.
+  const shownAt = useShownPositions(
+    game.players.map((p) => p.at),
+    trail,
+    () => playSound('step'),
+  );
+
+  // Sonidos opcionales a partir de lo que registra el juego.
+  const lastLog = useRef(game.log.length);
+  const lastDice = useRef(game.dice);
+  useEffect(() => {
+    if (game.dice && !lastDice.current) playSound('dice');
+    lastDice.current = game.dice;
+    const fresh = game.log.slice(lastLog.current);
+    lastLog.current = game.log.length;
+    const first = fresh.map(soundForLog).find((s) => s !== null);
+    if (first) playSound(first);
+  }, [game.log, game.dice]);
+
   // Si el tablero no cabe entero, la vista sigue a la ficha del jugador en turno.
-  const activeAt = game.players[game.current].at;
+  const activeAt = shownAt[game.current];
   useEffect(() => {
     const el = scrollEl;
     if (!el || (el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1)) return;
@@ -108,7 +132,20 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
 
   return (
     <div className="app">
-      <TopBar game={game} totalLots={lots.length} barrios={BARRIOS.length} onNewGame={onExit} />
+      <TopBar
+        game={game}
+        totalLots={lots.length}
+        barrios={BARRIOS.length}
+        onNewGame={onExit}
+        onHelp={() => setTutorial(true)}
+        soundOn={soundOn}
+        onToggleSound={() => {
+          const next = !soundOn;
+          setSoundEnabled(next);
+          setSoundOn(next);
+          if (next) playSound('buy');
+        }}
+      />
       <Toasts toasts={toasts} onDismiss={dismiss} />
 
       <main className="workspace">
@@ -129,13 +166,17 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                 tokens={game.players.map((p, k) => ({
                   id: p.id,
                   label: p.id.trim().charAt(0).toUpperCase(),
-                  at: p.at,
+                  at: shownAt[k],
                   color: PLAYER_COLORS[k],
                   active: k === game.current,
                 }))}
                 options={options}
                 ownerColors={ownerColors}
-                onPickNode={(node) => setGame((g) => moveTo(g, node, ctx))}
+                onPickNode={(node) => {
+                  const dest = game.options.find((d) => d.square === node);
+                  if (dest) setTrail({ player: game.current, path: dest.path, key: Date.now() });
+                  setGame((g) => moveTo(g, node, ctx));
+                }}
                 zoom={zoom}
                 onSelect={selectStreet}
                 onSelectLot={selectLot}
@@ -201,6 +242,8 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
       </main>
 
       {backdrop.mounted && <div className="sheet-backdrop" data-open={backdrop.open} onClick={closeSheet} />}
+
+      <Tutorial open={tutorial} onClose={() => setTutorial(false)} />
 
       <Modal open={trading} title="Proponer intercambio" onClose={() => setTrading(false)}>
         <TradePanel
