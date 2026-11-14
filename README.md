@@ -13,7 +13,7 @@ Límites (configurables en `src/engine/board.ts`), tal como se ven en pantalla:
 - Izquierda: **2 Sur**
 - Derecha: **4 Norte**
 
-Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 154 tramos sobre 88 intersecciones. **Las calles no se compran.**
+Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 143 tramos sobre 82 intersecciones. **Las calles no se compran.**
 
 ## Movimiento
 

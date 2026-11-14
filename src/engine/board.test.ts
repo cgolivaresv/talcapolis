@@ -14,15 +14,15 @@ describe('buildBoard (configuración Talcapolis)', () => {
     expect(v.indexOf('9½ Oriente')).toBe(v.indexOf('9 Oriente') + 1);
   });
 
-  it('incluye de 2 Sur a 4 Norte, más 1½ Norte y 3½ Norte', () => {
+  it('incluye de 2 Sur a 4 Norte, más 1½ Norte', () => {
     expect(names(board.horizontalStreets)).toEqual([
-      '2 Sur', '1 Sur', '1 Norte', '1½ Norte', '2 Norte', '3 Norte', '3½ Norte', '4 Norte',
+      '2 Sur', '1 Sur', '1 Norte', '1½ Norte', '2 Norte', '3 Norte', '4 Norte',
     ]);
   });
 
-  it('genera 88 intersecciones y 154 tramos (casillas)', () => {
-    expect(board.intersections).toHaveLength(88);
-    expect(board.segments).toHaveLength(154);
+  it('genera 82 intersecciones y 143 tramos (casillas)', () => {
+    expect(board.intersections).toHaveLength(82);
+    expect(board.segments).toHaveLength(143);
   });
 
   it('las calles parciales solo se cruzan dentro de su tramo', () => {
@@ -31,8 +31,7 @@ describe('buildBoard (configuración Talcapolis)', () => {
         .filter((i) => i.vertical.id === id || i.horizontal.id === id)
         .map((i) => (i.vertical.id === id ? i.horizontal.id : i.vertical.id));
     expect(cross('1.5-norte')).toEqual(['5-oriente', '6-oriente']);
-    expect(cross('3.5-norte').sort()).toEqual(['10-oriente', '11-oriente', '7-oriente', '8-oriente', '9-oriente', '9.5-oriente']);
-    expect(cross('9.5-oriente').sort()).toEqual(['3-norte', '3.5-norte', '4-norte']);
+    expect(cross('9.5-oriente').sort()).toEqual(['3-norte', '4-norte']);
   });
 
   it('cada tramo une dos intersecciones que existen', () => {
