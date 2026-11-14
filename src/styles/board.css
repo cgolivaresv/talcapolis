@@ -115,6 +115,15 @@
   font: 900 9px var(--font-title);
 }
 
+.service-mark {
+  cursor: pointer;
+}
+
+.mortgage-mark {
+  fill: #f5f1e8;
+  font: 800 11px var(--font-title);
+}
+
 .tile,
 .lot,
 .landmark,

@@ -799,3 +799,33 @@
   transition-duration: 150ms;
   transition-timing-function: linear;
 }
+
+/* --- Mejoras, hipotecas, subastas y deudas --- */
+.deed-owner-box {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(198, 139, 102, 0.45);
+}
+
+.deed-owner-box .tag {
+  margin-left: 0.4rem;
+}
+
+.tag-gold {
+  background: var(--gold);
+  color: var(--slate);
+}
+
+.deed-actions {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.bid-row {
+  flex-wrap: wrap;
+}
+
+.bid-row .btn {
+  flex: 1 1 auto;
+}

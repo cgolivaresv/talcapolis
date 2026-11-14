@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { type Board, type Intersection, type Segment } from '../engine/board';
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
 import type { Lot, Side } from '../engine/lots';
+import { serviceAt } from '../engine/services';
 import { directionOf } from '../engine/traffic';
 import { GLYPH_URL, glyphOfLandmark, glyphOfLot, type Glyph } from './glyphs';
 
@@ -56,6 +57,12 @@ interface Props {
   onPickNode?: (nodeId: string) => void;
   /** Color del dueño de cada lote comprado. */
   ownerColors?: Record<string, string>;
+  /** Propiedades hipotecadas y mejoras de cada lote. */
+  mortgaged?: Record<string, boolean>;
+  levels?: Record<string, number>;
+  /** Servicio seleccionado y qué hacer al tocar uno. */
+  selectedServiceId?: string | null;
+  onSelectService?: (serviceId: string) => void;
   /** Factor de zoom sobre el tamaño natural del tablero (1 = 1 px por unidad del dibujo). */
   zoom: number;
   onSelect: (segment: Segment | null) => void;
@@ -70,7 +77,7 @@ interface Props {
  */
 export const MIRROR_COLUMNS = true;
 
-export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, ownerColors = {}, zoom, onSelect, onSelectLot }: Props) {
+export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, ownerColors = {}, mortgaged = {}, levels = {}, selectedServiceId = null, onSelectService, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Calles equiespaciadas. sx recibe el índice de una calle Oriente/Poniente y sy el de una calle
@@ -249,6 +256,16 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                       <circle cx={ix + 13} cy={iy - 11} r="5" fill={ownerColors[lot.id]} stroke={INK} strokeWidth="1.5" />
                     )}
                     <GlyphImage glyph={glyphOfLot(lot)} x={ix - 12} y={iy - 11} size={25} />
+                    {mortgaged[lot.id] && (
+                      <g pointerEvents="none">
+                        <polygon points={sh.pts} fill="rgba(34,38,41,0.45)" />
+                        <text x={ix} y={iy + 4} textAnchor="middle" className="mortgage-mark">H</text>
+                      </g>
+                    )}
+                    {(levels[lot.id] ?? 0) > 0 &&
+                      Array.from({ length: levels[lot.id] }, (_, k) => (
+                        <circle key={k} cx={ix + (k - (levels[lot.id] - 1) / 2) * 7} cy={iy + 15} r="2.8" fill={GOLD} stroke={INK} strokeWidth="0.8" pointerEvents="none" />
+                      ))}
                     {selected && <polygon points={sh.pts} fill="none" stroke={GOLD} strokeWidth="3.5" />}
                   </g>
                 );
@@ -292,6 +309,28 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             <title>{`${seg.name} (${trafficLabel(seg)})`}</title>
             <rect x={t.x} y={t.y} width={t.w} height={t.h} fill={CREAM} stroke={INK} strokeWidth="1.5" />
             {trafficMarker(seg, t)}
+            {(() => {
+              const svc = serviceAt(seg.id);
+              if (!svc) return null;
+              const cx = t.x + t.w / 2;
+              const cy = t.y + t.h / 2;
+              const on = svc.id === selectedServiceId;
+              return (
+                <g
+                  className="service-mark"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectService?.(svc.id);
+                  }}
+                >
+                  <title>{svc.name}</title>
+                  <circle cx={cx} cy={cy} r="12" fill="#f5f1e8" stroke={on ? GOLD : INK} strokeWidth={on ? 3 : 1.5} />
+                  <GlyphImage glyph={svc.icon} x={cx - 9} y={cy - 9} size={18} />
+                  {ownerColors[svc.id] && <circle cx={cx + 10} cy={cy - 10} r="4.5" fill={ownerColors[svc.id]} stroke={INK} strokeWidth="1.2" pointerEvents="none" />}
+                  {mortgaged[svc.id] && <circle cx={cx} cy={cy} r="12" fill="rgba(34,38,41,0.45)" pointerEvents="none" />}
+                </g>
+              );
+            })()}
             {selected && (
               <rect x={t.x - 2} y={t.y - 2} width={t.w + 4} height={t.h + 4} fill="none" stroke={GOLD} strokeWidth="3.5" />
             )}

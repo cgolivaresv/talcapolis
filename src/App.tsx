@@ -3,7 +3,25 @@ import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
 import { cardSquaresOf } from './engine/cards';
-import { acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, skipBuy } from './engine/game';
+import {
+  acceptTrade,
+  build,
+  buy,
+  declareBankruptcy,
+  mortgage,
+  moveTo,
+  newGame,
+  passAuction,
+  payDebts,
+  placeBid,
+  proposeTrade,
+  rejectTrade,
+  roll,
+  sellImprovement,
+  skipBuy,
+  unmortgage,
+} from './engine/game';
+import { isServiceId } from './engine/services';
 import { placeLandmarks } from './engine/landmarks';
 import { buildLots, type Lot } from './engine/lots';
 import { ActionPanel } from './ui/ActionPanel';
@@ -36,6 +54,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
 
   const [street, setStreet] = useState<Segment | null>(null);
   const [lot, setLot] = useState<Lot | null>(null);
+  const [serviceId, setServiceId] = useState<string | null>(null);
   const [game, setGame] = useState(() => newGame(names, seed));
   const ctx = useMemo(() => ({ board, landmarks, lots, cardSquares }), [board, landmarks, lots, cardSquares]);
   const options = useMemo(() => new Set(game.options.map((d) => d.square)), [game.options]);
@@ -109,6 +128,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
   const clearSelection = () => {
     setStreet(null);
     setLot(null);
+    setServiceId(null);
   };
   const selectStreet = (s: Segment | null) => {
     clearSelection();
@@ -120,10 +140,16 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
     setLot(l);
     if (compact) setSheet('property');
   };
-  /** Al recorrer los lotes ofrecidos se muestra su ficha sin tapar los controles. */
-  const previewLot = (l: Lot) => {
+  const selectService = (id: string) => {
     clearSelection();
-    setLot(l);
+    setServiceId(id);
+    if (compact) setSheet('property');
+  };
+  /** Al recorrer las propiedades ofrecidas se muestra su ficha sin tapar los controles. */
+  const previewProperty = (id: string) => {
+    clearSelection();
+    if (isServiceId(id)) setServiceId(id);
+    else setLot(lots.find((l) => l.id === id) ?? null);
   };
 
   const closeSheet = useCallback(() => setSheet(null), []);
@@ -172,6 +198,10 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                 }))}
                 options={options}
                 ownerColors={ownerColors}
+                mortgaged={game.mortgaged}
+                levels={game.levels}
+                selectedServiceId={serviceId}
+                onSelectService={selectService}
                 onPickNode={(node) => {
                   const dest = game.options.find((d) => d.square === node);
                   if (dest) setTrail({ player: game.current, path: dest.path, key: Date.now() });
@@ -199,7 +229,19 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
 
         <div className="area-side">
           <div {...sheetProps('property')}>
-            <PropertyCard lot={lot} street={street} lots={lots} landmarks={landmarks} game={game} onClose={closeSheet} />
+            <PropertyCard
+              lot={lot}
+              serviceId={serviceId}
+              street={street}
+              lots={lots}
+              landmarks={landmarks}
+              game={game}
+              onClose={closeSheet}
+              onMortgage={(id) => setGame((g) => mortgage(g, id, lots))}
+              onUnmortgage={(id) => setGame((g) => unmortgage(g, id, lots))}
+              onBuild={(id) => setGame((g) => build(g, id, lots))}
+              onSellImprovement={(id) => setGame((g) => sellImprovement(g, id, lots))}
+            />
           </div>
           <div {...sheetProps('barrios')}>
             <BarriosPanel lots={lots} onClose={closeSheet} />
@@ -210,13 +252,19 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
           <ActionPanel
             game={game}
             lots={lots}
-            onRoll={() => setGame((g) => roll(g, board))}
+            onRoll={() => setGame((g) => roll(g, board, lots))}
             onBuy={(id) => setGame((g) => buy(g, id, lots))}
             onSkip={() => setGame((g) => skipBuy(g))}
             onAccept={() => setGame((g) => acceptTrade(g))}
             onReject={() => setGame((g) => rejectTrade(g))}
             onOpenTrade={() => setTrading(true)}
-            onPreviewLot={previewLot}
+            onPreviewProperty={previewProperty}
+            onBid={(amount) => setGame((g) => placeBid(g, amount, lots))}
+            onPassBid={() => setGame((g) => passAuction(g, lots))}
+            onPayDebts={() => setGame((g) => payDebts(g))}
+            onBankrupt={() => setGame((g) => declareBankruptcy(g))}
+            onMortgage={(id) => setGame((g) => mortgage(g, id, lots))}
+            onSellImprovement={(id) => setGame((g) => sellImprovement(g, id, lots))}
           />
           <div className={cardShown || !compact ? 'drawn-slot' : 'drawn-slot is-hidden'}>
             <DrawnCard card={drawn} onDismiss={() => drawn && setDismissedCard(drawn.key)} />

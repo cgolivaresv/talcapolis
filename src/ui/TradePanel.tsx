@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { tradeIsValid, type Game, type Trade } from '../engine/game';
 import type { Lot } from '../engine/lots';
+import { SERVICES } from '../engine/services';
 
 interface Props {
   game: Game;
@@ -8,6 +9,12 @@ interface Props {
   colors: string[];
   onPropose: (trade: Trade) => void;
   onCancel: () => void;
+}
+
+interface Item {
+  id: string;
+  label: string;
+  price: number;
 }
 
 const lotLabel = (l: Lot) =>
@@ -23,7 +30,12 @@ export function TradePanel({ game, lots, colors, onPropose, onCancel }: Props) {
   const [giveMoney, setGiveMoney] = useState(0);
   const [takeMoney, setTakeMoney] = useState(0);
 
-  const lotsOf = (k: number) => lots.filter((l) => game.owners[l.id] === k);
+  // Lotes y servicios del jugador; los que tienen mejoras no se pueden intercambiar.
+  const items: Item[] = [
+    ...lots.map((l) => ({ id: l.id, label: lotLabel(l), price: l.price })),
+    ...SERVICES.map((s) => ({ id: s.id, label: s.name, price: s.price })),
+  ];
+  const lotsOf = (k: number) => items.filter((it) => game.owners[it.id] === k && (game.levels[it.id] ?? 0) === 0);
   const toggle = (list: string[], set: (v: string[]) => void, id: string) =>
     set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   const trade: Trade = { from, to, giveLots, giveMoney, takeLots, takeMoney };
@@ -36,7 +48,8 @@ export function TradePanel({ game, lots, colors, onPropose, onCancel }: Props) {
         <li key={l.id}>
           <label>
             <input type="checkbox" checked={selected.includes(l.id)} onChange={() => toggle(selected, set, l.id)} />
-            {lotLabel(l)} <strong>${l.price}</strong>
+            {l.label}
+            {game.mortgaged[l.id] ? ' (hipotecada)' : ''} <strong>${l.price}</strong>
           </label>
         </li>
       ))}

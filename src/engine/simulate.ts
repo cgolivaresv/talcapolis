@@ -1,9 +1,28 @@
 import { buildBoard } from './board';
 import { cardSquaresOf } from './cards';
+import { buildCheck, mortgageCheck, propertyPrice, sellCheck as sellImprovementCheck, unmortgageCheck } from './assets';
 import { lotsOnSegment, rentOf } from './economy';
-import { buy, moveTo, newGame, roll, skipBuy, type Game } from './game';
+import {
+  build,
+  buy,
+  declareBankruptcy,
+  mortgage,
+  moveTo,
+  newGame,
+  passAuction,
+  payDebts,
+  placeBid,
+  roll,
+  sellImprovement,
+  skipBuy,
+  totalDebt,
+  unmortgage,
+  type Game,
+} from './game';
 import { placeLandmarks } from './landmarks';
-import { buildLots, type Lot } from './lots';
+import { buildLots } from './lots';
+import { improvementCost } from './properties';
+import { serviceAt } from './services';
 import { isNodeId, nextRandom } from './movement';
 
 /**
@@ -43,6 +62,8 @@ export interface SimResult {
   bankruptRolls: (number | null)[];
   /** Plata que se movió por tipo de hecho (sale del historial de la partida). */
   flows: { rent: number; start: number; bought: number; fines: number; bankIn: number; bankOut: number };
+  /** Cuántas veces ocurrió cada novedad de reglas en la partida. */
+  events: { auctions: number; mortgages: number; improvements: number; debts: number };
   finalMoney: number[];
 }
 
@@ -71,9 +92,11 @@ export function simulate(opts: SimOptions): SimResult {
       if (owner === undefined) {
         if (g.players[me].money - lot.price >= reserve) s += 3 + lot.price / 40;
       } else if (owner !== me) {
-        worstRent = Math.max(worstRent, rentOf(lot, owner, g.owners, lots));
+        worstRent = Math.max(worstRent, rentOf(lot, owner, { owners: g.owners, mortgaged: g.mortgaged, levels: g.levels }, lots));
       }
     }
+    const svc = serviceAt(square);
+    if (svc && g.owners[svc.id] === undefined && g.players[me].money - svc.price >= reserve) s += 3 + svc.price / 40;
     return s - worstRent / 4;
   };
 
@@ -92,22 +115,78 @@ export function simulate(opts: SimOptions): SimResult {
     return best;
   };
 
-  while (g.winner === null && rolls < maxRolls) {
+  /** El jugador automático puja hasta el precio de la propiedad (y sin gastar su reserva). */
+  const botAuction = () => {
+    const a = g.auction!;
+    const me = g.players[a.bidder];
+    const maxBid = Math.min(propertyPrice(a.queue[0], lots), me.money - Math.min(reserve, 100));
+    if (a.highBid + 10 > maxBid) {
+      g = passAuction(g, lots);
+      return;
+    }
+    const step = Math.max(10, Math.round((maxBid - a.highBid) / 4 / 10) * 10);
+    g = placeBid(g, Math.min(maxBid, a.highBid + step), lots);
+  };
+
+  /** Con deudas: vende mejoras e hipoteca hasta poder pagar; si no se puede, quiebra. */
+  const botDebts = () => {
+    const i = g.current;
+    for (let guard = 0; guard < 200 && g.players[i].money < totalDebt(g); guard++) {
+      const mine = Object.keys(g.owners).filter((id) => g.owners[id] === i);
+      const improved = mine.find((id) => (g.levels[id] ?? 0) > 0 && sellCheck(g, i, id));
+      const before = g;
+      if (improved) g = sellImprovement(g, improved, lots);
+      else {
+        const target = mine.find((id) => mortgageCheck(g, i, id, lots) === null);
+        if (target) g = mortgage(g, target, lots);
+      }
+      if (g === before) break;
+    }
+    g = g.players[i].money >= totalDebt(g) ? payDebts(g) : declareBankruptcy(g);
+  };
+  const sellCheck = (st: Game, i: number, id: string) => {
+    const lot = lots.find((l) => l.id === id);
+    return lot ? sellImprovementCheck(st, i, lot, lots) === null : false;
+  };
+
+  /** Antes de tirar: levanta hipotecas y construye mejoras si sobra plata. */
+  const botManage = () => {
+    const i = g.current;
+    for (let guard = 0; guard < 30; guard++) {
+      const me = g.players[i];
+      const mine = Object.keys(g.owners).filter((id) => g.owners[id] === i);
+      const toUnmortgage = mine.find((id) => unmortgageCheck(g, i, me.money, id, lots) === null && me.money > reserve + 150);
+      if (toUnmortgage) {
+        g = unmortgage(g, toUnmortgage, lots);
+        continue;
+      }
+      const toBuild = lots.find((l) => buildCheck(g, i, me.money, l, lots) === null && me.money - improvementCost(l.price) >= reserve);
+      if (!toBuild) return;
+      g = build(g, toBuild.id, lots);
+    }
+  };
+
+  let guard = 0;
+  while (g.winner === null && rolls < maxRolls && guard++ < maxRolls * 40) {
     const before = g.bankrupt.map((b) => b);
-    g = roll(g, board);
-    rolls++;
-    if (g.options.length > 0) g = moveTo(g, chooseSquare(), ctx);
-    if (g.buyOptions.length > 0) {
-      const me = g.players[g.current];
-      const choices = g.buyOptions
-        .map((id) => lots.find((l) => l.id === id) as Lot)
-        .filter((l) => me.money - l.price >= reserve)
-        .sort((a, b) => b.price - a.price);
-      g = choices.length > 0 ? buy(g, choices[0].id, lots) : skipBuy(g);
+    if (g.auction) {
+      botAuction();
+    } else if (g.debts.length > 0) {
+      botDebts();
+    } else {
+      botManage();
+      g = roll(g, board, lots);
+      rolls++;
+      if (g.options.length > 0) g = moveTo(g, chooseSquare(), ctx);
+      if (g.buyOptions.length > 0) {
+        const me = g.players[g.current];
+        const choices = g.buyOptions.filter((id) => me.money - propertyPrice(id, lots) >= reserve).sort((x, y) => propertyPrice(y, lots) - propertyPrice(x, lots));
+        g = choices.length > 0 ? buy(g, choices[0], lots) : skipBuy(g);
+      }
     }
     peakLotsSold = Math.max(peakLotsSold, Object.keys(g.owners).length);
-    g.bankrupt.forEach((b, k) => {
-      if (b && !before[k]) bankruptRolls[k] = rolls;
+    g.bankrupt.forEach((bk, k) => {
+      if (bk && !before[k]) bankruptRolls[k] = rolls;
     });
   }
 
@@ -116,13 +195,20 @@ export function simulate(opts: SimOptions): SimResult {
     let m: RegExpExecArray | null;
     if ((m = /paga \$(\d+) de arriendo/.exec(line))) flows.rent += Number(m[1]);
     else if ((m = /pasa por la SALIDA y cobra \$(\d+)/.exec(line))) flows.start += Number(m[1]);
-    else if ((m = /compra .* por \$(\d+)\./.exec(line))) flows.bought += Number(m[1]);
+    else if ((m = /(?:compra|gana la subasta de) .* por \$(\d+)\./.exec(line))) flows.bought += Number(m[1]);
     else if ((m = /paga \$(\d+) de fianza/.exec(line))) flows.fines += Number(m[1]);
     else if ((m = /Cobras \$(\d+)\./.exec(line))) flows.bankIn += Number(m[1]);
     else if ((m = /Pagas \$(\d+)/.exec(line))) flows.bankOut += Number(m[1]);
   }
+  const events = {
+    auctions: g.log.filter((l) => /gana la subasta/.test(l)).length,
+    mortgages: g.log.filter((l) => / hipoteca /.test(l)).length,
+    improvements: g.log.filter((l) => /construye la mejora/.test(l)).length,
+    debts: g.log.filter((l) => /no le alcanza: puede hipotecar/.test(l)).length,
+  };
   return {
     flows,
+    events,
     finished: g.winner !== null,
     winner: g.winner,
     rolls,

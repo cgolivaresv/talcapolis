@@ -6,7 +6,7 @@ export const START_NODE = '11-oriente/2-sur';
 /** Esquina "A LA CÁRCEL": quien cae aquí va a la Cárcel. */
 export const GO_TO_JAIL_NODE = '11-oriente/4-norte';
 /** Lo que se cobra al pasar por la SALIDA. */
-export const START_BONUS = 200;
+export const START_BONUS = 100;
 
 /**
  * El recorrido se compone de dos tipos de casillas, que se alternan:

@@ -51,7 +51,7 @@ export function landmarkPriceOf(id: string): number {
  * muchas casillas (215) y cada lote se pisa pocas veces por partida: con estos valores un lote se
  * paga solo en unas 35 rondas (calibrado con src/engine/simulate.ts).
  */
-export const LANDMARK_RENT_RATE = 1.6;
+export const LANDMARK_RENT_RATE = 2.4;
 
 /**
  * Arriendo de un edificio: una fracción de su precio, que se duplica por cada otro edificio de la
@@ -65,7 +65,7 @@ export function landmarkRentOf(id: string, ownedOfSameKind = 1): number {
 // --- Arriendo de casas y locales -------------------------------------------
 
 /** Arriendo de una casa o un local, como fracción de su precio (ver la nota de LANDMARK_RENT_RATE). */
-export const LOT_RENT_RATE = 2;
+export const LOT_RENT_RATE = 3;
 
 /** Arriendo = fracción del precio (mínimo $2). El local comercial paga más porque cuesta el doble. */
 export function baseRentOfLot(price: number): number {
@@ -81,3 +81,23 @@ export function lotRent(price: number, opts: { ownsManzana?: boolean; ownsBarrio
   const factor = (opts.ownsManzana ? MANZANA_COMPLETE_FACTOR : 1) * (opts.ownsBarrio ? BARRIO_COMPLETE_FACTOR : 1);
   return Math.round(baseRentOfLot(price) * factor);
 }
+
+// --- Mejoras e hipotecas ----------------------------------------------------
+
+/** Máximo de mejoras que puede tener una casa o un local. */
+export const MAX_LEVEL = 3;
+/** Cuánto cuesta cada mejora, como fracción del precio del lote. */
+export const BUILD_COST_RATE = 0.5;
+/** Qué fracción de lo gastado se recupera al vender una mejora. */
+export const SELL_IMPROVEMENT_RATE = 0.5;
+/** Multiplicador del arriendo según las mejoras del lote (0 a MAX_LEVEL). */
+export const LEVEL_RENT: readonly number[] = [1, 1.6, 2.4, 3.5];
+/** Lo que se recibe al hipotecar, como fracción del precio. */
+export const MORTGAGE_RATE = 0.3;
+/** Recargo al levantar una hipoteca. */
+export const UNMORTGAGE_INTEREST = 0.1;
+
+export const improvementCost = (price: number) => Math.round(price * BUILD_COST_RATE);
+export const improvementSaleValue = (price: number) => Math.round(improvementCost(price) * SELL_IMPROVEMENT_RATE);
+export const mortgageValue = (price: number) => Math.round(price * MORTGAGE_RATE);
+export const unmortgageCost = (price: number) => Math.round(mortgageValue(price) * (1 + UNMORTGAGE_INTEREST));

@@ -83,6 +83,6 @@ export function soundForLog(line: string): SoundName | null {
   if (/gana Talcapolis/.test(line)) return 'win';
   if (/saca una tarjeta|casilla de acción/.test(line)) return 'card';
   if (/de arriendo|quiebra|fianza/.test(line)) return 'rent';
-  if (/ compra |cobra|cierran/.test(line)) return 'buy';
+  if (/ compra |gana la subasta|cobra|cierran|hipoteca|construye/.test(line)) return 'buy';
   return null;
 }

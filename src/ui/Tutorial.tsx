@@ -38,6 +38,11 @@ const STEPS: { glyph: Glyph; title: string; body: string }[] = [
     body: 'Las intersecciones no se compran. Las casillas "?" sacan una tarjeta; las que tienen un rombo de cobre disparan un evento de la ciudad (cobrar, pagar, perder turno, tirar de nuevo…). Las esquinas del tablero tienen su propio efecto.',
   },
   {
+    glyph: 'electricity',
+    title: 'Servicios, hipotecas y mejoras',
+    body: 'Dos servicios (electricidad y agua) cobran según los dados. Puedes hipotecar una propiedad para juntar plata (no cobra arriendo mientras tanto). Si tienes los 4 sitios de una manzana puedes construir mejoras que suben el arriendo. Si no compras un lote, se subasta entre los demás.',
+  },
+  {
     glyph: 'bank',
     title: 'Barrios e intercambios',
     body: 'Con los 4 sitios de una manzana el arriendo sube ×1,5, y con todos los lotes de un barrio ×2. Antes de tirar puedes proponer intercambios de lotes y dinero. Gana el último jugador que no quiebre.',

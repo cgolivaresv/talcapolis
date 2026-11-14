@@ -9,6 +9,7 @@ const board = buildBoard();
 const landmarks = placeLandmarks(board);
 const lots = buildLots(board, landmarks);
 const ctx = { board, landmarks, lots, cardSquares: new Set<string>() };
+const hold = (owners: Record<string, number>) => ({ owners, mortgaged: {}, levels: {} });
 
 describe('economía', () => {
   const inner = board.segments.find((s) => lotsOnSegment(board, lots, s.id).length === 2)!;
@@ -41,8 +42,8 @@ describe('economía', () => {
     g = buy(g, lot.id, lots);
     expect(g.owners[lot.id]).toBe(0);
     expect(g.players[0].money).toBe(1500 - lot.price);
-    expect(rentsDue(board, lots, g.owners, inner.id, 1).map((d) => d.lot.id)).toContain(lot.id);
-    expect(rentsDue(board, lots, g.owners, inner.id, 0)).toHaveLength(0);
+    expect(rentsDue(board, lots, hold(g.owners), inner.id, 1).map((d) => d.id)).toContain(lot.id);
+    expect(rentsDue(board, lots, hold(g.owners), inner.id, 0)).toHaveLength(0);
   });
 
   it('quien no puede pagar quiebra y sus lotes quedan libres; el otro gana', () => {
@@ -59,7 +60,7 @@ describe('economía', () => {
   it('solo se cobra el arriendo del sitio más caro del tramo', () => {
     const around = lotsOnSegment(board, lots, inner.id);
     const owners = Object.fromEntries(around.map((l) => [l.id, 0]));
-    const due = rentsDue(board, lots, owners, inner.id, 1);
+    const due = rentsDue(board, lots, hold(owners), inner.id, 1);
     expect(due).toHaveLength(1);
     expect(due[0].amount).toBe(Math.max(...around.map((l) => rentOf(l, 0, owners, lots))));
   });

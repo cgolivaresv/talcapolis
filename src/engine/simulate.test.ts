@@ -33,6 +33,8 @@ describe('simulación de partidas', () => {
     const results = Array.from({ length: GAMES }, (_, k) => simulate({ players, seed: 1000 + k, policy, maxRolls: 6000, reserve: Number(process.env.SIM_RESERVE ?? 150) }));
     const avg = (k: 'rent' | 'start' | 'bought' | 'fines' | 'bankIn' | 'bankOut') => Math.round(results.reduce((s, r) => s + r.flows[k], 0) / results.length);
     console.log('FLUJOS por partida', JSON.stringify({ rent: avg('rent'), start: avg('start'), bought: avg('bought'), fines: avg('fines'), bankIn: avg('bankIn'), bankOut: avg('bankOut') }));
+    const ev = (k: 'auctions' | 'mortgages' | 'improvements' | 'debts') => +(results.reduce((s, r) => s + r.events[k], 0) / results.length).toFixed(1);
+    console.log('EVENTOS por partida', JSON.stringify({ subastas: ev('auctions'), hipotecas: ev('mortgages'), mejoras: ev('improvements'), deudas: ev('debts') }));
     console.log(`SIM ${players} jugadores, política ${policy}:`, JSON.stringify(summarize(results, players)));
   });
 });
@@ -75,7 +77,7 @@ describe('acciones aleatorias de la ciudad', () => {
     for (let k = 0; k < 40 && !g.log.some((l) => l.includes('pierde este turno')); k++) {
       if (g.buyOptions.length) g = skipBuy(g);
       else if (g.options.length) g = moveTo(g, g.options[0].square, ctx);
-      else g = roll(g, board);
+      else g = roll(g, board, lots);
     }
     expect(g.log.some((l) => l.includes('A pierde este turno'))).toBe(true);
     expect(g.current).toBe(1);

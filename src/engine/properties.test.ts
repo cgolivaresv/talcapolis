@@ -15,24 +15,24 @@ describe('edificios emblemáticos', () => {
   });
 
   it('el arriendo se duplica por cada edificio más de la misma clase', () => {
-    expect(landmarkRentOf('estacion', 1)).toBe(400);
-    expect(landmarkRentOf('liceo-la-salle', 1)).toBe(240);
-    expect(landmarkRentOf('liceo-la-salle', 2)).toBe(480);
-    expect(landmarkRentOf('liceo-la-salle', 4)).toBe(1920);
+    expect(landmarkRentOf('estacion', 1)).toBe(600);
+    expect(landmarkRentOf('liceo-la-salle', 1)).toBe(360);
+    expect(landmarkRentOf('liceo-la-salle', 2)).toBe(720);
+    expect(landmarkRentOf('liceo-la-salle', 4)).toBe(2880);
   });
 });
 
 describe('arriendo de casas y locales', () => {
-  it('es el doble del precio, con mínimo de $2', () => {
-    expect(baseRentOfLot(100)).toBe(200);
-    expect(baseRentOfLot(40)).toBe(80);
-    expect(baseRentOfLot(1)).toBe(2);
+  it('es el triple del precio, con mínimo de $2', () => {
+    expect(baseRentOfLot(100)).toBe(300);
+    expect(baseRentOfLot(40)).toBe(120);
+    expect(baseRentOfLot(0)).toBe(2);
   });
 
   it('tener la manzana completa lo multiplica por 1,5 y el barrio completo por 2', () => {
-    expect(lotRent(100)).toBe(200);
-    expect(lotRent(100, { ownsManzana: true })).toBe(300);
-    expect(lotRent(100, { ownsBarrio: true })).toBe(400);
-    expect(lotRent(100, { ownsManzana: true, ownsBarrio: true })).toBe(600);
+    expect(lotRent(100)).toBe(300);
+    expect(lotRent(100, { ownsManzana: true })).toBe(450);
+    expect(lotRent(100, { ownsBarrio: true })).toBe(600);
+    expect(lotRent(100, { ownsManzana: true, ownsBarrio: true })).toBe(900);
   });
 });

@@ -2,6 +2,8 @@ import bank from '../assets/graficos/bank.svg';
 import hotel from '../assets/graficos/hotel.svg';
 import house from '../assets/graficos/house.svg';
 import luck from '../assets/graficos/luck.svg';
+import electricity from '../assets/graficos/service-electricity.svg';
+import water from '../assets/graficos/service-water.svg';
 import cathedral from '../assets/graficos/token-cathedral.svg';
 import market from '../assets/graficos/token-market.svg';
 import plaza from '../assets/graficos/token-plaza.svg';
@@ -10,9 +12,9 @@ import train from '../assets/graficos/token-train.svg';
 import type { Lot } from '../engine/lots';
 
 /** Biblioteca gráfica «Talcapolis — Edición Arquitectónica Talca» (src/assets/graficos). */
-export type Glyph = 'bank' | 'hotel' | 'house' | 'luck' | 'cathedral' | 'market' | 'plaza' | 'theatre' | 'train';
+export type Glyph = 'bank' | 'hotel' | 'house' | 'luck' | 'cathedral' | 'market' | 'plaza' | 'theatre' | 'train' | 'electricity' | 'water';
 
-export const GLYPH_URL: Record<Glyph, string> = { bank, hotel, house, luck, cathedral, market, plaza, theatre, train };
+export const GLYPH_URL: Record<Glyph, string> = { bank, hotel, house, luck, cathedral, market, plaza, theatre, train, electricity, water };
 
 /** Gráfico de cada edificio emblemático. */
 export const LANDMARK_GLYPH: Record<string, Glyph> = {

@@ -34,10 +34,20 @@ Los edificios emblemáticos que están dibujados en una intersección siguen en 
 Al caer en un **tramo de calle**, los **lotes que dan a él** son los sitios de las manzanas de ambos lados que miran a esa calle (**hasta 2**, o 1 en una calle del borde del tablero):
 
 - Los que están **libres** se pueden comprar, uno por visita, si alcanza la plata (o se pasa).
-- Entre los que tienen **dueño ajeno** se paga solo el arriendo del **sitio más caro**: el **doble del precio** en casas y locales (×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio) y 1,6 veces el precio en edificios emblemáticos, que se duplica por cada otro de la misma clase. Parece mucho, pero cada tramo se pisa muy pocas veces por partida (ver "Equilibrio").
-- Quien no puede pagar **quiebra**: sus lotes vuelven a quedar libres y sale de la partida. Gana el último que queda.
+- Entre las propiedades con **dueño ajeno** se paga solo el arriendo de la **más cara**: el **triple del precio** en casas y locales (×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio; más las mejoras), 2,4 veces el precio en edificios emblemáticos (que se duplica por cada otro de la misma clase) y, en los servicios, según los dados. Parece mucho, pero cada tramo se pisa muy pocas veces por partida (ver "Equilibrio"). Las propiedades hipotecadas no cobran.
+- Si el jugador **no compra**, la propiedad se **subasta** (ver abajo).
+- Quien no puede pagar queda en **deuda** si puede juntar la plata hipotecando o vendiendo mejoras (no puede seguir jugando hasta pagar o declararse en quiebra). Si ni así alcanza, **quiebra**: sus propiedades pasan al jugador a quien debía (o quedan libres si era el banco) y sale de la partida. Gana el último que queda.
 
 La lógica está en `src/engine/economy.ts`.
+
+## Reglas adicionales
+
+- **Servicios:** dos propiedades que no son lotes, la *Compañía Eléctrica del Maule* y *Aguas Nuevosur Talca* ($150 cada una). Están en un tramo de calle y se ofrecen, junto con los lotes de ese tramo, a quien cae en él. Cobran **20 × los dados** de quien cae (**50 ×** si el dueño tiene los dos). Están en `src/engine/services.ts`.
+- **Hipotecas:** se hipoteca una propiedad sin mejoras y se reciben el **30%** de su precio; mientras tanto no cobra arriendo. Levantarla cuesta lo recibido más 10%. Se hace desde la ficha de la propiedad (o desde el panel de deudas).
+- **Mejoras:** con los **4 sitios de una manzana** (y ninguno hipotecado) se pueden construir hasta **3 mejoras** por casa o local, de a una y *parejo* entre los sitios. Cada mejora cuesta el 50% del precio del lote y multiplica el arriendo (×1,6, ×2,4 y ×3,5). Al venderla se recupera la mitad. Los edificios emblemáticos y los lotes con mejoras no se mejoran ni se intercambian.
+- **Subastas:** si quien cae en un tramo decide no comprar, lo que rechazó se subasta entre los demás jugadores (alzas de $10, $25 o $50 sobre la oferta más alta; cada uno puede ofertar o retirarse). Si nadie oferta, queda libre.
+
+La lógica de estas reglas está en `src/engine/game.ts` y `src/engine/assets.ts`; las constantes (porcentajes, límites) en `src/engine/properties.ts`.
 
 ## Equilibrio
 
@@ -52,7 +62,7 @@ SIM_GAMES=300 SIM_PLAYERS=4 npx vitest run src/engine/simulate.test.ts
 Lo que mostró, con 4 jugadores:
 
 - Con el tablero actual (215 casillas) cada lote se pisa ~1,3 veces por partida. Con un arriendo del 12% del precio la renta casi no circulaba (≈$140 por partida frente a ≈$5.700 gastados en comprar), la partida se decidía por los pagos al banco y duraba una mediana de **100 tiradas por jugador**.
-- Subiendo el arriendo al doble del precio un lote se paga solo en unas 35 rondas, la renta pasa a ser el motor del juego y la mediana baja a **~60 tiradas por jugador** (p90 ≈ 85). Jugadores más cautelosos alargan la partida.
+- Subiendo el arriendo la renta pasa a ser el motor del juego. Con las reglas adicionales (hipotecas, subastas, servicios, mejoras) la vara quedó en el **triple del precio**, el bono por pasar por la SALIDA en $100 y la hipoteca en el 30%: medianas de **~88 tiradas por jugador con 2 jugadores, ~73 con 4 y ~64 con 6** (p90: 143, 102 y 84). Las hipotecas son un salvavidas y alargan la partida; por eso se probaron valores más bajos.
 - No hay ventaja por el asiento (con 2, 4 y 6 jugadores las victorias se reparten parejo), las partidas siempre terminan, y se venden entre el 10% (2 jugadores) y el 26% (6) de los lotes.
 - Bajar el dinero inicial **no** acorta las partidas (se compran menos lotes y hay menos arriendos).
 
