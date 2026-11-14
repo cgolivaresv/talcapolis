@@ -148,11 +148,6 @@
   font-size: 0.82rem;
 }
 
-.hint-soft {
-  color: var(--ink-muted);
-  font-size: 0.72rem;
-}
-
 .hint em {
   color: var(--ink-muted);
   font-style: normal;

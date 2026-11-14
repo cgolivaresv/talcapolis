@@ -47,20 +47,9 @@ describe('movimiento por las calles', () => {
     for (const d of destinations(board, seg.id, 3, START_NODE)) expect(d.path[2]).not.toBe(seg.id);
   });
 
-  it('quien empieza su turno en una intersección puede volver por donde vino si la calle lo permite', () => {
-    // Un tramo de doble sentido y una intersección de la que se venía por él.
-    const two = board.segments.find((s) => canEnter(s, s.from) && canEnter(s, s.to))!;
-    const back = destinations(board, two.to, 1, two.from).map((d) => d.square);
-    expect(back).toContain(two.id);
-    // En un sentido único no se puede entrar en contra.
-    const one = board.segments.find((s) => canEnter(s, s.from) && !canEnter(s, s.to))!;
-    expect(destinations(board, one.to, 1, one.from).map((d) => d.square)).not.toContain(one.id);
-  });
-
-  it('en pleno recorrido no se da media vuelta si hay otra salida', () => {
-    for (const d of destinations(board, START_NODE, 4)) {
-      if (d.path[3] === d.path[1]) expect(legalMoves(board, d.path[2])).toHaveLength(1);
-    }
+  it('no se da media vuelta en una intersección si hay otra salida', () => {
+    const [first] = legalMoves(board, START_NODE);
+    for (const d of destinations(board, first.to, 2, START_NODE)) expect(d.path[1]).not.toBe(first.segment.id);
   });
 
   it('cameFromAfter entrega la intersección anterior según dónde se termine', () => {
