@@ -1,9 +1,16 @@
 /**
  * Modelo del tablero de Talcapolis.
  *
- * Talca tiene calles numeradas: las "Oriente/Poniente" corren de norte a sur
- * (ejes verticales) y las "Norte/Sur" corren de oriente a poniente (ejes horizontales).
- * No existe la calle "0": la secuencia es ... 2 Poniente, 1 Poniente, 1 Oriente, 2 Oriente ...
+ * Talca tiene calles numeradas Oriente/Poniente y Norte/Sur. No existe la calle "0":
+ * la secuencia es ... 2 Poniente, 1 Poniente, 1 Oriente, 2 Oriente ...
+ *
+ * Orientación en pantalla (según el diseño del tablero):
+ *   - Arriba: 2 Poniente  -> Abajo: 11 Oriente   (eje Poniente-Oriente, de arriba hacia abajo)
+ *   - Izquierda: 2 Sur    -> Derecha: 4 Norte    (eje Sur-Norte, de izquierda a derecha)
+ *
+ * Nota de nomenclatura: "vertical" = calles Oriente/Poniente (índice x en el modelo) y
+ * "horizontal" = calles Norte/Sur (índice y). Son nombres del modelo, no de la pantalla:
+ * la UI decide cómo proyectarlos.
  *
  * Cada TRAMO de calle entre dos intersecciones consecutivas es una casilla/propiedad.
  */
@@ -18,7 +25,7 @@ export interface BoardConfig {
   north: { side: 'Norte' | 'Sur'; n: number };
 }
 
-/** Configuración inicial acordada. El borde norte (4 Norte) es una interpretación a confirmar. */
+/** Configuración acordada: arriba 2 Poniente, abajo 11 Oriente, izquierda 2 Sur, derecha 4 Norte. */
 export const TALCAPOLIS_CONFIG: BoardConfig = {
   west: { side: 'Poniente', n: 2 },
   east: { side: 'Oriente', n: 11 },

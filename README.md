@@ -4,14 +4,14 @@ Juego de mesa tipo Monopoly basado en la ciudad de Talca, Chile. Webapp pensada 
 
 ## Tablero
 
-Las calles de Talca están numeradas. Las `N Oriente/Poniente` corren de norte a sur y las `N Norte/Sur` de oriente a poniente. No existe la calle "0".
+Las calles de Talca están numeradas (`N Oriente/Poniente` y `N Norte/Sur`). No existe la calle "0".
 
-Límites iniciales (configurables en `src/engine/board.ts`):
+Límites (configurables en `src/engine/board.ts`), tal como se ven en pantalla:
 
-- Poniente: **2 Poniente**
-- Oriente: **11 Oriente**
-- Sur: **2 Sur**
-- Norte: **4 Norte** (interpretación a confirmar)
+- Arriba: **2 Poniente**
+- Abajo: **11 Oriente**
+- Izquierda: **2 Sur**
+- Derecha: **4 Norte**
 
 Cada **tramo de calle entre dos intersecciones** es una casilla/propiedad: 137 casillas sobre 78 intersecciones.
 
