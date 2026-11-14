@@ -59,7 +59,7 @@ export function ActionPanel({ game, lots, onRoll, onBuy, onSkip, onAccept, onRej
         </div>
       ) : game.buyOptions.length > 0 ? (
         <div className="action-body">
-          <p className="hint">Puedes comprar un lote de aquí:</p>
+          <p className="hint">Puedes comprar un lote de esta calle:</p>
           <div className="buy-list">
             {buyLots.map((l) => (
               <button key={l.id} type="button" className="buy-option" onClick={() => onBuy(l.id)} onMouseEnter={() => onPreviewLot(l)} onFocus={() => onPreviewLot(l)}>
@@ -75,7 +75,7 @@ export function ActionPanel({ game, lots, onRoll, onBuy, onSkip, onAccept, onRej
         </div>
       ) : game.options.length > 0 ? (
         <p className="hint">
-          Toca una intersección marcada del tablero para avanzar <em>({game.options.length} destinos)</em>.
+          Toca una casilla marcada del tablero para avanzar <em>({game.options.length} destinos)</em>.
         </p>
       ) : (
         <div className="btn-row">

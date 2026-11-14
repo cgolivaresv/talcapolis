@@ -103,6 +103,18 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
   const landmarkLotId = (l: PlacedLandmark) => `em:${l.id}`;
   const barrioColorOf = (l: PlacedLandmark) => BARRIO_COLORS[lotByLandmark.get(l.id)?.barrio ?? 0];
 
+  const segById = useMemo(() => new Map(board.segments.map((s) => [s.id, s])), [board]);
+  /** Centro en pantalla de una casilla del recorrido: una intersección o un tramo de calle. */
+  const squareCenter = (id: string): { x: number; y: number } | null => {
+    const n = byId.get(id);
+    if (n) return { x: sx(n.x), y: sy(n.y) };
+    const s = segById.get(id);
+    if (!s) return null;
+    const a = byId.get(s.from) as Intersection;
+    const c = byId.get(s.to) as Intersection;
+    return { x: (sx(a.x) + sx(c.x)) / 2, y: (sy(a.y) + sy(c.y)) / 2 };
+  };
+
   const tile = (seg: Segment) => {
     const a = byId.get(seg.from) as Intersection;
     const b = byId.get(seg.to) as Intersection;
@@ -339,7 +351,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             ) : lm ? (
               <GlyphImage glyph={glyphOfLandmark(lm.id)} x={cx - 11} y={cy - 9} size={22} />
             ) : (
-              <circle cx={cx} cy={cy} r="3" fill={INK} />
+              <path className="action-mark" d={`M${cx} ${cy - 6.5}L${cx + 6.5} ${cy}L${cx} ${cy + 6.5}L${cx - 6.5} ${cy}Z`} fill={COPPER} stroke={INK} strokeWidth="1" />
             )}
           </g>
         );
@@ -377,7 +389,26 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
           );
         })}
 
-      {/* Destinos posibles del jugador en turno */}
+      {/* Destinos posibles del jugador en turno: tramos de calle e intersecciones */}
+      {options &&
+        board.segments
+          .filter((s) => options.has(s.id))
+          .map((s) => {
+            const t = tile(s);
+            return (
+              <g
+                key={`opt-${s.id}`}
+                className="move-option move-option-tile"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPickNode?.(s.id);
+                }}
+              >
+                <title>Avanzar hasta aquí</title>
+                <rect x={t.x - 2} y={t.y - 2} width={t.w + 4} height={t.h + 4} rx="4" fill="rgba(212,175,55,0.4)" stroke={GOLD} strokeWidth="3" strokeDasharray="5 3" />
+              </g>
+            );
+          })}
       {options &&
         board.intersections
           .filter((n) => options.has(n.id))
@@ -395,16 +426,16 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             </g>
           ))}
 
-      {/* Fichas: si hay varias en una intersección se reparten alrededor */}
+      {/* Fichas: si hay varias en una misma casilla se reparten alrededor */}
       {tokens.map((t, k) => {
-        const n = byId.get(t.at);
-        if (!n) return null;
+        const center = squareCenter(t.at);
+        if (!center) return null;
         const mates = tokens.filter((o) => o.at === t.at);
         const slot = mates.findIndex((o) => o.id === t.id);
         const ang = (slot / Math.max(mates.length, 1)) * Math.PI * 2 - Math.PI / 2;
         const off = mates.length > 1 ? 8 : 0;
-        const x = sx(n.x) + Math.cos(ang) * off;
-        const y = sy(n.y) + Math.sin(ang) * off;
+        const x = center.x + Math.cos(ang) * off;
+        const y = center.y + Math.sin(ang) * off;
         return (
           <g
             key={`tok-${k}`}

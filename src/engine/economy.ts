@@ -7,22 +7,22 @@ import { LANDMARK_INFO, landmarkRentOf, lotRent } from './properties';
 export type Owners = Record<string, number>;
 
 /**
- * Lotes que dan a una intersección: de las 4 manzanas que la rodean, los sitios que miran a
- * cualquiera de las dos calles que se cruzan allí (hasta 8). Son los que se pueden comprar al
- * caer en ella, y los que cobran arriendo.
+ * Lotes que dan a un tramo de calle: los sitios de las manzanas de ambos lados que miran a esa calle
+ * (uno por lado, o solo uno si la calle está en el borde del tablero). Son los que se pueden comprar al
+ * caer en el tramo, y los que cobran arriendo. Las intersecciones no tienen lotes.
  */
-export function lotsAround(board: Board, lots: Lot[], nodeId: string): Lot[] {
-  const n = board.intersections.find((i) => i.id === nodeId);
-  if (!n) return [];
-  const rowMax = board.verticalStreets.length - 2;
-  const colMax = board.horizontalStreets.length - 2;
+export function lotsOnSegment(board: Board, lots: Lot[], segmentId: string): Lot[] {
+  const seg = board.segments.find((s) => s.id === segmentId);
+  if (!seg) return [];
+  const a = board.intersections.find((i) => i.id === seg.from);
+  const b = board.intersections.find((i) => i.id === seg.to);
+  if (!a || !b) return [];
+  // A lo largo de una calle Oriente/Poniente varía la columna (índice Norte/Sur); a lo largo de una Norte/Sur, la fila.
+  const alongVertical = seg.street.orientation === 'vertical';
   return lots.filter(
     (l) =>
-      l.cell.row >= n.x - 1 &&
-      l.cell.row <= Math.min(n.x, rowMax) &&
-      l.cell.col >= n.y - 1 &&
-      l.cell.col <= Math.min(n.y, colMax) &&
-      (l.frontStreetId === n.vertical.id || l.frontStreetId === n.horizontal.id),
+      l.frontStreetId === seg.street.id &&
+      (alongVertical ? l.cell.col === Math.min(a.y, b.y) : l.cell.row === Math.min(a.x, b.x)),
   );
 }
 
@@ -41,12 +41,12 @@ export function rentOf(lot: Lot, owner: number, owners: Owners, lots: Lot[]): nu
 }
 
 /**
- * Arriendo que debe pagar quien cae en una intersección: solo el del sitio más caro entre los lotes
- * ajenos con dueño que dan a ella (si no hay ninguno, nada).
+ * Arriendo que debe pagar quien cae en un tramo de calle: solo el del sitio más caro entre los lotes
+ * ajenos con dueño que dan a él (si no hay ninguno, nada).
  */
-export function rentsDue(board: Board, lots: Lot[], owners: Owners, nodeId: string, payer: number) {
+export function rentsDue(board: Board, lots: Lot[], owners: Owners, segmentId: string, payer: number) {
   const due: { lot: Lot; owner: number; amount: number }[] = [];
-  for (const lot of lotsAround(board, lots, nodeId)) {
+  for (const lot of lotsOnSegment(board, lots, segmentId)) {
     const owner = owners[lot.id];
     if (owner === undefined || owner === payer) continue;
     due.push({ lot, owner, amount: rentOf(lot, owner, owners, lots) });

@@ -36,7 +36,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
   const [lot, setLot] = useState<Lot | null>(null);
   const [game, setGame] = useState(() => newGame(names, seed));
   const ctx = useMemo(() => ({ board, landmarks, lots, cardSquares }), [board, landmarks, lots, cardSquares]);
-  const options = useMemo(() => new Set(game.options.map((d) => d.node)), [game.options]);
+  const options = useMemo(() => new Set(game.options.map((d) => d.square)), [game.options]);
   const ownerColors = useMemo(
     () => Object.fromEntries(Object.entries(game.owners).map(([id, o]) => [id, PLAYER_COLORS[o]])),
     [game.owners],

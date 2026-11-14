@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildBoard } from './board';
-import { lotsAround, rentOf, rentsDue } from './economy';
+import { lotsOnSegment, rentOf, rentsDue } from './economy';
 import { MAX_PLAYERS, acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, validatePlayerNames, type Game } from './game';
 import { placeLandmarks } from './landmarks';
 import { buildLots } from './lots';
@@ -11,10 +11,18 @@ const lots = buildLots(board, landmarks);
 const ctx = { board, landmarks, lots, cardSquares: new Set<string>() };
 
 describe('economía', () => {
-  it('una intersección interior da a 8 lotes y una esquina a 2', () => {
-    const inner = board.intersections.find((n) => n.x > 0 && n.y > 0 && n.x < board.verticalStreets.length - 1 && n.y < board.horizontalStreets.length - 1)!;
-    expect(lotsAround(board, lots, inner.id)).toHaveLength(8);
-    expect(lotsAround(board, lots, '2-poniente/2-sur')).toHaveLength(2);
+  const inner = board.segments.find((s) => lotsOnSegment(board, lots, s.id).length === 2)!;
+  const edge = board.segments.find((s) => lotsOnSegment(board, lots, s.id).length === 1)!;
+
+  it('un tramo interior da a 2 lotes (uno por lado) y uno de borde a 1', () => {
+    expect(lotsOnSegment(board, lots, inner.id)).toHaveLength(2);
+    expect(lotsOnSegment(board, lots, edge.id)).toHaveLength(1);
+    for (const s of board.segments) expect(lotsOnSegment(board, lots, s.id).length).toBeLessThanOrEqual(2);
+  });
+
+  it('todos los lotes se pueden comprar desde algún tramo', () => {
+    const reachable = new Set(board.segments.flatMap((s) => lotsOnSegment(board, lots, s.id).map((l) => l.id)));
+    expect(reachable.size).toBe(lots.length);
   });
 
   it('el arriendo sube al reunir la manzana y el barrio', () => {
@@ -26,40 +34,46 @@ describe('economía', () => {
     expect(rentOf(lot, 0, barrio, lots)).toBeGreaterThan(rentOf(lot, 0, mz, lots));
   });
 
-  it('comprar descuenta el precio, y quien cae después paga arriendo al dueño', () => {
+  it('comprar descuenta el precio, y quien cae después en el tramo paga arriendo al dueño', () => {
     let g: Game = newGame(['A', 'B'], 3);
-    const node = '11-oriente/2-sur';
-    const lot = lotsAround(board, lots, node)[0];
+    const lot = lotsOnSegment(board, lots, inner.id)[0];
     g = { ...g, buyOptions: [lot.id] };
     g = buy(g, lot.id, lots);
     expect(g.owners[lot.id]).toBe(0);
     expect(g.players[0].money).toBe(1500 - lot.price);
-    expect(rentsDue(board, lots, g.owners, node, 1).map((d) => d.lot.id)).toContain(lot.id);
-    expect(rentsDue(board, lots, g.owners, node, 0)).toHaveLength(0);
+    expect(rentsDue(board, lots, g.owners, inner.id, 1).map((d) => d.lot.id)).toContain(lot.id);
+    expect(rentsDue(board, lots, g.owners, inner.id, 0)).toHaveLength(0);
   });
 
   it('quien no puede pagar quiebra y sus lotes quedan libres; el otro gana', () => {
     let g: Game = newGame(['A', 'B'], 3);
-    const node = '11-oriente/2-sur';
-    const lot = lotsAround(board, lots, node)[0];
+    const lot = lotsOnSegment(board, lots, inner.id)[0];
     g = { ...g, owners: { [lot.id]: 0 }, players: [{ ...g.players[0], ownedLotIds: [lot.id] }, { ...g.players[1], money: 0 }], current: 1 };
-    g = { ...g, options: [{ node, path: [node, node], passedStart: false }], dice: [1, 2] };
-    g = moveTo(g, node, ctx);
+    g = { ...g, options: [{ square: inner.id, path: [inner.from, inner.id], passedStart: false }], dice: [1, 2] };
+    g = moveTo(g, inner.id, ctx);
     expect(g.bankrupt[1]).toBe(true);
     expect(g.winner).toBe(0);
     expect(roll(g, board)).toBe(g);
   });
 
-  it('solo se cobra el arriendo del sitio más caro', () => {
-    const node = '11-oriente/2-sur';
-    const around = lotsAround(board, lots, node);
-    const g = newGame(['A', 'B'], 1);
+  it('solo se cobra el arriendo del sitio más caro del tramo', () => {
+    const around = lotsOnSegment(board, lots, inner.id);
     const owners = Object.fromEntries(around.map((l) => [l.id, 0]));
-    const due = rentsDue(board, lots, owners, node, 1);
+    const due = rentsDue(board, lots, owners, inner.id, 1);
     expect(due).toHaveLength(1);
-    const max = Math.max(...around.map((l) => rentOf(l, 0, owners, lots)));
-    expect(due[0].amount).toBe(max);
-    expect(g.players).toHaveLength(2);
+    expect(due[0].amount).toBe(Math.max(...around.map((l) => rentOf(l, 0, owners, lots))));
+  });
+
+  it('en las intersecciones no se compra ni se paga arriendo', () => {
+    const node = inner.from;
+    const mine = lotsOnSegment(board, lots, inner.id)[0];
+    let g: Game = newGame(['A', 'B'], 3);
+    g = { ...g, owners: { [mine.id]: 0 }, players: [{ ...g.players[0], ownedLotIds: [mine.id] }, g.players[1]], current: 1 };
+    g = { ...g, options: [{ square: node, path: [inner.id, node], passedStart: false }], dice: [1, 2] };
+    const after = moveTo(g, node, ctx);
+    expect(after.buyOptions).toHaveLength(0);
+    expect(after.players[1].money).toBe(1500);
+    expect(after.players[0].money).toBe(1500);
   });
 });
 

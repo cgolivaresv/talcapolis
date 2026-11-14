@@ -1,8 +1,9 @@
 import type { Board } from './board';
 import { JAIL_NODE, applyCard, createDeck, drawCard, type CardContext, type Deck, type PlayerState } from './cards';
-import { lotsAround, rentsDue, type Owners } from './economy';
+import { RANDOM_ACTIONS, nodeActionOf } from './actions';
+import { lotsOnSegment, rentsDue, type Owners } from './economy';
 import type { Lot } from './lots';
-import { GO_TO_JAIL_NODE, START_BONUS, START_NODE, destinations, rollDice, type Destination } from './movement';
+import { START_BONUS, START_NODE, cameFromAfter, destinations, isNodeId, nextRandom, rollDice, type Destination } from './movement';
 
 /** Fianza para salir de la Cárcel tras 3 turnos sin sacar dobles. */
 export const JAIL_FINE = 50;
@@ -146,40 +147,64 @@ export interface GameContext extends CardContext {
   lots: Lot[];
 }
 
-/** El jugador en turno avanza hasta `node` (uno de los destinos posibles) y se resuelve la casilla. */
-export function moveTo(game: Game, node: string, ctx: GameContext): Game {
-  const dest = game.options.find((d) => d.node === node);
+/**
+ * El jugador en turno avanza hasta `square` (uno de los destinos posibles) y se resuelve la casilla:
+ *   - intersección: casilla de acción (tarjeta "?", acción aleatoria, esquinas); no se compra ni se paga arriendo;
+ *   - tramo de calle: se paga arriendo por los lotes ajenos y se pueden comprar los libres.
+ */
+export function moveTo(game: Game, square: string, ctx: GameContext): Game {
+  const dest = game.options.find((d) => d.square === square);
   if (!dest || game.winner !== null) return game;
   const i = game.current;
   const double = !!game.dice && game.dice[0] === game.dice[1];
-  let me: PlayerState = { ...game.players[i], at: node };
+  let me: PlayerState = { ...game.players[i], at: square };
   let others = game.players.filter((_, k) => k !== i);
   let deck = game.deck;
+  let seed = game.seed;
   const log = [...game.log];
-  let newCameFrom: string | null = dest.path.length >= 2 ? dest.path[dest.path.length - 2] : null;
+  let newCameFrom: string | null = cameFromAfter(dest, game.cameFrom[i]);
 
   if (dest.passedStart) {
     me = { ...me, money: me.money + START_BONUS };
     log.push(`${me.id} pasa por la SALIDA y cobra $${START_BONUS}.`);
   }
 
-  if (node === GO_TO_JAIL_NODE) {
-    me = { ...me, at: JAIL_NODE, inJail: true };
-    newCameFrom = null;
-    log.push(`${me.id} cae en "A la Cárcel" y va preso.`);
-  } else if (ctx.cardSquares.has(node)) {
-    const drawn = drawCard(deck);
-    deck = drawn.deck;
-    const res = applyCard(drawn.card, me, others, ctx);
-    me = res.player;
-    others = res.others;
-    log.push(`${me.id} saca una tarjeta: «${drawn.card.text}» ${res.summary}`);
-    if (me.at !== node) newCameFrom = null;
+  if (isNodeId(square)) {
+    switch (nodeActionOf(square, ctx.cardSquares)) {
+      case 'go-to-jail':
+        me = { ...me, at: JAIL_NODE, inJail: true };
+        newCameFrom = null;
+        log.push(`${me.id} cae en "A la Cárcel" y va preso.`);
+        break;
+      case 'card': {
+        const drawn = drawCard(deck);
+        deck = drawn.deck;
+        const res = applyCard(drawn.card, me, others, ctx);
+        me = res.player;
+        others = res.others;
+        log.push(`${me.id} saca una tarjeta: «${drawn.card.text}» ${res.summary}`);
+        if (me.at !== square) newCameFrom = null;
+        break;
+      }
+      case 'random': {
+        // Acciones aleatorias: todavía sin definir (ver RANDOM_ACTIONS en actions.ts).
+        if (RANDOM_ACTIONS.length > 0) {
+          const [u, next] = nextRandom(seed);
+          seed = next;
+          const action = RANDOM_ACTIONS[Math.floor(u * RANDOM_ACTIONS.length)];
+          me = { ...me, money: me.money + action.money };
+          log.push(`${me.id} cae en una casilla de acción: ${action.text}`);
+        }
+        break;
+      }
+      default:
+        break; // SALIDA, LIBRE y CÁRCEL (de visita): sin efecto
+    }
   }
 
-  // Arriendos por los lotes ajenos que dan a esta intersección (no se cobra estando preso).
+  // Arriendos por los lotes ajenos que dan a este tramo (no se cobra estando preso).
   let owed: ReturnType<typeof rentsDue> = [];
-  if (!me.inJail && me.at === node) owed = rentsDue(ctx.board, ctx.lots, game.owners, node, i);
+  if (!isNodeId(square) && !me.inJail) owed = rentsDue(ctx.board, ctx.lots, game.owners, square, i);
   const credits = new Map<number, number>();
   let money = me.money;
   for (const d of owed) {
@@ -196,10 +221,11 @@ export function moveTo(game: Game, node: string, ctx: GameContext): Game {
     const base = others.find((o) => o.id === p.id) ?? p;
     return { ...base, money: base.money + (credits.get(k) ?? 0) };
   });
-  let g: Game = {
+  const g: Game = {
     ...game,
     players,
     deck,
+    seed,
     log,
     cameFrom: replace(game.cameFrom, i, newCameFrom),
     dice: null,
@@ -207,15 +233,16 @@ export function moveTo(game: Game, node: string, ctx: GameContext): Game {
     rollAgain: double && !me.inJail,
   };
 
-  // Sin plata para pagar lo que debe (arriendos o tarjetas): quiebra.
+  // Sin plata para pagar lo que debe (arriendos, tarjetas o acciones): quiebra.
   if (shortfall > 0 || me.money < 0) return endTurn(declareBankrupt(g, i));
 
-  // Lotes libres alrededor que puede comprar donde cayó.
-  const buyOptions = me.inJail || me.at !== node
-    ? []
-    : lotsAround(ctx.board, ctx.lots, node)
-        .filter((l) => g.owners[l.id] === undefined && l.price <= me.money)
-        .map((l) => l.id);
+  // Lotes libres del tramo donde cayó (en las intersecciones no se compra).
+  const buyOptions =
+    isNodeId(square) || me.inJail || me.at !== square
+      ? []
+      : lotsOnSegment(ctx.board, ctx.lots, square)
+          .filter((l) => g.owners[l.id] === undefined && l.price <= me.money)
+          .map((l) => l.id);
   if (buyOptions.length > 0) return { ...g, buyOptions };
   return finishTurn(g);
 }

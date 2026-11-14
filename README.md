@@ -8,15 +8,30 @@ Las calles de Talca están numeradas (`N Oriente/Poniente` y `N Norte/Sur`). No 
 
 Límites (configurables en `src/engine/board.ts`): de **2 Poniente** a **11 Oriente** y de **2 Sur** a **4 Norte**. El tablero se dibuja horizontal, con el mapa real girado 180°: **2 Sur arriba**, 4 Norte abajo, 11 Oriente a la izquierda y 2 Poniente a la derecha (`MIRROR_COLUMNS` en `src/ui/BoardView.tsx` los invierte). La pantalla se ajusta sola a la ventana, sin scroll.
 
-Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 137 tramos sobre 78 intersecciones. **Las calles no se compran.**
+Las casillas del recorrido son los **137 tramos de calle** y las **78 intersecciones**. **Las calles no se compran.**
 
 ## Movimiento
 
-Se juega de **2 a 6 jugadores** (nombres a elección, sin repetirse). Cada uno parte en la SALIDA (Estación). En su turno tira **dos dados** y avanza exactamente esa cantidad de **tramos de calle** (de intersección en intersección), respetando el **sentido del tránsito**. No se da media vuelta salvo que no haya otra salida. En cada intersección con varias salidas el jugador no elige paso a paso: el tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la Cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno); las casillas "?" sacan tarjeta. Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
+Se juega de **2 a 6 jugadores** (nombres a elección, sin repetirse). Cada uno parte en la SALIDA (Estación). En su turno tira **dos dados** y avanza esa cantidad de **casillas**, respetando el **sentido del tránsito**. El recorrido alterna dos tipos de casilla:
+
+- **Tramos de calle:** donde se **compra** y se **paga arriendo**.
+- **Intersecciones (las esquinas de las cuadras):** **casillas de acción**. No se compra ni se paga arriendo.
+
+No se da media vuelta salvo que no haya otra salida. El tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno). Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
+
+### Casillas de acción
+
+Todas las intersecciones son casillas de acción (`src/engine/actions.ts`):
+
+- **"?"** (10 casillas): sacan una tarjeta con una acción.
+- **Esquinas del tablero:** SALIDA (solo se cobra al pasar), LIBRE (sin efecto), CÁRCEL (de visita) y "A LA CÁRCEL" (va preso).
+- **Resto:** acción aleatoria. **Todavía no hay acciones definidas**: la lista `RANDOM_ACTIONS` está vacía y esas casillas no tienen efecto. Agregar una acción es sumar un elemento a esa lista.
+
+Los edificios emblemáticos que están dibujados en una intersección siguen en su lugar; el lote se compra desde un tramo de calle de su manzana.
 
 ## Compra y arriendo
 
-Al caer en una intersección, los **lotes que dan a ella** (de las 4 manzanas que la rodean, los sitios que miran a cualquiera de las dos calles que se cruzan: hasta 8) son los que importan:
+Al caer en un **tramo de calle**, los **lotes que dan a él** son los sitios de las manzanas de ambos lados que miran a esa calle (**hasta 2**, o 1 en una calle del borde del tablero):
 
 - Los que están **libres** se pueden comprar, uno por visita, si alcanza la plata (o se pasa).
 - Entre los que tienen **dueño ajeno** se paga solo el arriendo del **sitio más caro** (12% del precio; ×1,5 si el dueño tiene los 4 sitios de la manzana; ×2 si tiene todo el barrio). Los edificios emblemáticos cobran el 10% de su precio y se duplica por cada otro de la misma clase.
