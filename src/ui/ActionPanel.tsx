@@ -2,6 +2,7 @@ import type { Game } from '../engine/game';
 import type { Lot } from '../engine/lots';
 import { BARRIO_COLORS } from './BoardView';
 import { KIND_LABEL, PLAYER_COLORS } from './colors';
+import { isNodeId } from '../engine/movement';
 import { Dice } from './Dice';
 
 interface Props {
@@ -78,6 +79,10 @@ export function ActionPanel({ game, lots, onRoll, onBuy, onSkip, onAccept, onRej
           Toca una casilla marcada del tablero para avanzar <em>({game.options.length} destinos)</em>.
         </p>
       ) : (
+        <>
+        {isNodeId(turnOf.at) && !turnOf.inJail ? (
+          <p className="hint hint-soft">Estás en una esquina: este turno puedes elegir cualquier dirección que permita la calle, incluso volver.</p>
+        ) : null}
         <div className="btn-row">
           <button type="button" className="btn btn-primary btn-lg" onClick={onRoll}>
             Tirar dados
@@ -86,6 +91,7 @@ export function ActionPanel({ game, lots, onRoll, onBuy, onSkip, onAccept, onRej
             Intercambio
           </button>
         </div>
+        </>
       )}
     </section>
   );

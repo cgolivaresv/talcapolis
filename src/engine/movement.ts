@@ -29,7 +29,11 @@ export interface Destination {
 /**
  * Todas las casillas a las que se puede llegar avanzando exactamente `steps` casillas, respetando el
  * sentido del tránsito. Desde una intersección se entra a un tramo; desde un tramo se llega a la
- * intersección del otro extremo. No se da media vuelta (salvo que no haya otra salida).
+ * intersección del otro extremo.
+ *
+ * Dirección: quien empieza su turno en una intersección (porque cayó en ella) puede elegir cualquier
+ * salida que permita el sentido de las calles, incluso volver por donde vino. Una vez en marcha, al
+ * pasar por una intersección no se da media vuelta (salvo que no haya otra salida).
  *
  * `cameFrom` es la intersección anterior: si `from` es un tramo, la intersección por la que se entró;
  * si es una intersección, la que se dejó atrás.
@@ -56,7 +60,8 @@ export function destinations(board: Board, from: string, steps: number, cameFrom
       return;
     }
     const moves = legalMoves(board, square);
-    const forward = moves.filter((m) => m.to !== prev);
+    // En la primera casilla del turno se puede cambiar de dirección libremente.
+    const forward = path.length === 1 ? moves : moves.filter((m) => m.to !== prev);
     for (const m of forward.length > 0 ? forward : moves) walk(m.segment.id, square, remaining - 1, [...path, m.segment.id]);
   };
 

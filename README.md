@@ -17,7 +17,7 @@ Se juega de **2 a 6 jugadores** (nombres a elección, sin repetirse). Cada uno p
 - **Tramos de calle:** donde se **compra** y se **paga arriendo**.
 - **Intersecciones (las esquinas de las cuadras):** **casillas de acción**. No se compra ni se paga arriendo.
 
-No se da media vuelta salvo que no haya otra salida. El tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno). Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
+**Cambio de dirección:** quien cae en una intersección puede, en su turno siguiente, elegir cualquier dirección que permita el sentido de las calles, incluso volver por donde vino. Ya en marcha, al pasar por una intersección no se da media vuelta salvo que no haya otra salida. El tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno). Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
 
 ### Casillas de acción
 
