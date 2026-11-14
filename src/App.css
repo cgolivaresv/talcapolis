@@ -39,9 +39,10 @@
 .layout {
   min-height: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 16px;
-  align-items: stretch;
+  grid-template-columns: auto 22rem;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px 12px;
+  justify-content: center;
 }
 
 .board-panel {
@@ -73,11 +74,12 @@
 }
 
 .board-scroll {
-  flex: 1;
-  min-height: 0;
-  max-width: 100%;
-  overflow: auto;
+  overflow: hidden;
   border-radius: 10px;
+}
+
+.board-scroll.manual {
+  overflow: auto;
 }
 
 .board {
@@ -210,19 +212,7 @@
 }
 
 .side {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  grid-auto-rows: max-content;
-  gap: 12px;
-  align-content: start;
-  align-items: start;
-  overflow: auto;
-}
-
-.side > * {
-  max-height: 100%;
-  overflow: auto;
+  display: contents;
 }
 
 .deed-barrio {
@@ -769,11 +759,109 @@
   height: 36px;
 }
 
-.log {
-  max-height: none;
-}
 
 /* Pantallas angostas: se apila y se permite desplazarse */
+
+
+/* --- Tablero horizontal: tablero arriba a la izquierda, ficha a la derecha, turno debajo --- */
+.board-panel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.deed {
+  grid-column: 2;
+  grid-row: 1;
+  overflow: auto;
+  max-height: 100%;
+  align-self: start;
+}
+
+.turn {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: minmax(13rem, 1.1fr) minmax(12rem, 1fr) minmax(0, 1.7fr);
+  gap: 0 1rem;
+  align-items: start;
+  min-height: 0;
+  overflow: auto;
+}
+
+.turn h2 {
+  margin-top: 0;
+}
+
+.turn .players,
+.turn .log {
+  margin-top: 0;
+}
+
+.turn .log {
+  border-top: 0;
+  border-left: 1px solid #bbb;
+  padding: 0 0 0 0.8rem;
+}
+
+.barrios {
+  grid-column: 2;
+  grid-row: 2;
+  overflow: auto;
+  min-height: 0;
+}
+
+.barrios ul {
+  gap: 2px;
+}
+
+.credits {
+  margin-top: 0.5rem;
+  display: block;
+  text-align: left;
+  color: #4d6a5c;
+}
+
+.credits a {
+  color: #144e3a;
+}
+
+.new-game {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(34, 38, 41, 0.6);
+}
+
+.modal-card {
+  box-sizing: border-box;
+  width: min(30rem, 92vw);
+  max-height: 92dvh;
+  overflow: auto;
+  padding: 1rem;
+  background: #f5f1e8;
+  border: 2px solid #c68b66;
+  border-radius: 6px;
+  box-shadow: 6px 6px 0 #0b2d21;
+  color: #222629;
+}
+
+.modal-card h2 {
+  margin: 0 0 0.5rem;
+  font: 800 1rem var(--font-title);
+  color: #144e3a;
+}
+
+.trade-lots {
+  max-height: 9rem;
+}
+
 @media (max-width: 899px) {
   .app {
     height: auto;
@@ -783,22 +871,52 @@
 
   .layout {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
   }
 
-  .board-scroll {
-    flex: none;
-    max-height: 90vh;
+  .board-panel,
+  .deed,
+  .turn,
+  .barrios {
+    grid-column: 1;
+    grid-row: auto;
   }
 
-  .side,
-  .side > * {
-    overflow: visible;
+  .turn {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .turn .log {
+    border-left: 0;
+    padding: 0;
   }
 }
 
-/* Con pantalla grande sobra espacio al lado del tablero (que es más alto que ancho): paneles más grandes */
-@media (min-width: 1700px) and (min-height: 950px) {
-  .side {
-    zoom: 1.3;
-  }
+.banner {
+  position: relative;
+}
+
+.banner .new-game {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+}
+
+.barrios-note a {
+  color: #144e3a;
+}
+
+.barrios ul {
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 0.6rem;
+}
+
+.barrios em {
+  float: none;
+  margin-left: 0.2rem;
+  font-size: 0.8em;
 }

@@ -18,7 +18,7 @@ describe('lotes y barrios', () => {
   it('cada manzana tiene un sitio por cada calle que la rodea', () => {
     for (const id of manzanaIds) {
       const sides = lotsOfManzana(lots, id).map((l) => l.side).sort();
-      expect(sides).toEqual(['E', 'N', 'S', 'W']);
+      expect(sides).toEqual(['norte', 'oriente', 'poniente', 'sur']);
       expect(lotsOfManzana(lots, id)).toHaveLength(SITES_PER_MANZANA);
     }
   });

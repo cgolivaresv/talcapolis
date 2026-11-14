@@ -62,18 +62,23 @@ interface Props {
 }
 
 /**
- * Proyección a pantalla:
- *   fila    = índice de calle Oriente/Poniente (2 Poniente arriba, 11 Oriente abajo)
- *   columna = índice de calle Norte/Sur        (2 Sur a la izquierda, 4 Norte a la derecha)
+ * Proyección a pantalla (tablero horizontal, el mapa real girado 180°: el sur queda arriba):
+ *   y = calles Norte/Sur        (2 Sur arriba, 4 Norte abajo)
+ *   x = calles Oriente/Poniente (11 Oriente a la izquierda, 2 Poniente a la derecha)
+ * Con MIRROR_COLUMNS en false las columnas van de 2 Poniente (izquierda) a 11 Oriente (derecha).
  */
+export const MIRROR_COLUMNS = true;
+
 export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, cardSquares, onCardSquare, tokens = [], options, onPickNode, ownerColors = {}, zoom, onSelect, onSelectLot }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
-  const px = (col: number) => LEFT + K * lerpPositionM(board.horizontalStreets, col);
-  const py = (row: number) => TOP + K * lerpPositionM(board.verticalStreets, row);
-  const width = px(cols - 1) + 70;
-  const height = py(rows - 1) + 70;
+  // sx recibe el índice de una calle Oriente/Poniente y sy el de una calle Norte/Sur (pueden ser fraccionarios).
+  const vTotal = lerpPositionM(board.verticalStreets, rows - 1);
+  const sx = (v: number) => LEFT + K * (MIRROR_COLUMNS ? vTotal - lerpPositionM(board.verticalStreets, v) : lerpPositionM(board.verticalStreets, v));
+  const sy = (h: number) => TOP + K * lerpPositionM(board.horizontalStreets, h);
+  const width = LEFT + K * vTotal + 70;
+  const height = sy(cols - 1) + 70;
   const fullRows = board.verticalStreets.filter((s) => !s.spanM);
   const fullCols = board.horizontalStreets.filter((s) => !s.spanM);
 
@@ -101,11 +106,11 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
   const tile = (seg: Segment) => {
     const a = byId.get(seg.from) as Intersection;
     const b = byId.get(seg.to) as Intersection;
-    // a.x / b.x = fila, a.y / b.y = columna
-    const x1 = px(a.y);
-    const y1 = py(a.x);
-    const x2 = px(b.y);
-    const y2 = py(b.x);
+    // a.x / b.x = índice de calle Oriente/Poniente, a.y / b.y = índice de calle Norte/Sur
+    const x1 = sx(a.x);
+    const y1 = sy(a.y);
+    const x2 = sx(b.x);
+    const y2 = sy(b.y);
     if (x1 === x2) {
       return { x: x1 - TILE / 2, y: Math.min(y1, y2) + GAP, w: TILE, h: Math.abs(y2 - y1) - 2 * GAP };
     }
@@ -128,15 +133,15 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
     const dir = directionOf(seg);
     const a = byId.get(seg.from) as Intersection;
     const b = byId.get(seg.to) as Intersection;
-    let ux = px(b.y) - px(a.y);
-    let uy = py(b.x) - py(a.x);
+    let ux = sx(b.x) - sx(a.x);
+    let uy = sy(b.y) - sy(a.y);
     const l = Math.hypot(ux, uy) || 1;
     ux /= l;
     uy /= l;
-    const vertical = t.w === TILE; // la franja de color ocupa los primeros 10 px del tramo
-    const cx = vertical ? t.x + TILE / 2 : t.x + 10 + (t.w - 10) / 2;
-    const cy = vertical ? t.y + 10 + (t.h - 10) / 2 : t.y + TILE / 2;
-    const len = Math.max(8, Math.min(16, (vertical ? t.h : t.w) - 10 - 8));
+    const vertical = t.w === TILE;
+    const cx = t.x + t.w / 2;
+    const cy = t.y + t.h / 2;
+    const len = Math.max(8, Math.min(16, (vertical ? t.h : t.w) - 8));
     if (dir === 'both') {
       const ox = vertical ? 4.5 : 0;
       const oy = vertical ? 0 : 4.5;
@@ -172,24 +177,35 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
       <rect x="4" y="4" width={width - 8} height={height - 8} rx="10" fill="#dbe5da" stroke="#144e3a" strokeWidth="5" />
       <rect x="12" y="12" width={width - 24} height={height - 24} rx="6" fill="none" stroke={COPPER} strokeWidth="2" />
 
-      {/* Manzanas en venta: entre calles enteras consecutivas, con el color de su barrio.
-          Las calles parciales (1½ Norte, etc.) cruzan por encima. */}
+      {/* Manzanas en venta: entre calles enteras consecutivas, con el color de su barrio. */}
       {fullRows.slice(0, -1).map((r, ri) =>
         fullCols.slice(0, -1).map((c, ci) => {
-          // Los 4 sitios de la manzana: uno por lado, mirando a la calle que lo rodea.
+          // Cada manzana está entre dos calles Oriente/Poniente (r, r+1) y dos calles Norte/Sur (c, c+1).
           const sites = lots.filter((l) => l.cell.row === ri && l.cell.col === ci);
-          const x = px(c.index) + GAP + 6;
-          const y = py(r.index) + GAP + 6;
-          const w = px(fullCols[ci + 1].index) - px(c.index) - 2 * GAP - 12;
-          const h = py(fullRows[ri + 1].index) - py(r.index) - 2 * GAP - 12;
+          const xPon = sx(r.index);
+          const xOri = sx(fullRows[ri + 1].index);
+          const ySur = sy(c.index);
+          const yNor = sy(fullCols[ci + 1].index);
+          const x = Math.min(xPon, xOri) + GAP + 6;
+          const y = Math.min(ySur, yNor) + GAP + 6;
+          const w = Math.abs(xOri - xPon) - 2 * GAP - 12;
+          const h = Math.abs(yNor - ySur) - 2 * GAP - 12;
           const cx = x + w / 2;
           const cy = y + h / 2;
           // Cada sitio es un triángulo con la base sobre su calle y la punta en el centro.
-          const shape: Record<Side, { pts: string; edge: [number, number, number, number]; mid: [number, number] }> = {
-            N: { pts: `${x},${y} ${x + w},${y} ${cx},${cy}`, edge: [x, y, x + w, y], mid: [cx, y] },
-            E: { pts: `${x + w},${y} ${x + w},${y + h} ${cx},${cy}`, edge: [x + w, y, x + w, y + h], mid: [x + w, cy] },
-            S: { pts: `${x},${y + h} ${x + w},${y + h} ${cx},${cy}`, edge: [x, y + h, x + w, y + h], mid: [cx, y + h] },
-            W: { pts: `${x},${y} ${x},${y + h} ${cx},${cy}`, edge: [x, y, x, y + h], mid: [x, cy] },
+          const edge = {
+            left: { pts: `${x},${y} ${x},${y + h} ${cx},${cy}`, edge: [x, y, x, y + h], mid: [x, cy] },
+            right: { pts: `${x + w},${y} ${x + w},${y + h} ${cx},${cy}`, edge: [x + w, y, x + w, y + h], mid: [x + w, cy] },
+            top: { pts: `${x},${y} ${x + w},${y} ${cx},${cy}`, edge: [x, y, x + w, y], mid: [cx, y] },
+            bottom: { pts: `${x},${y + h} ${x + w},${y + h} ${cx},${cy}`, edge: [x, y + h, x + w, y + h], mid: [cx, y + h] },
+          } as const;
+          const ponLeft = xPon < xOri;
+          const surTop = ySur < yNor;
+          const shape: Record<Side, { pts: string; edge: readonly number[]; mid: readonly number[] }> = {
+            poniente: ponLeft ? edge.left : edge.right,
+            oriente: ponLeft ? edge.right : edge.left,
+            sur: surTop ? edge.top : edge.bottom,
+            norte: surTop ? edge.bottom : edge.top,
           };
           return (
             <g key={`mz${ri}-${ci}`}>
@@ -230,20 +246,20 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         }),
       )}
 
-      {/* Rótulos de calles */}
-      {board.verticalStreets.map((s) => (
-        <text key={s.id} x={LEFT - 38} y={py(s.index) + (STREET_ALIASES[s.id] ? 0 : 4)} textAnchor="end" className="axis-label">
+      {/* Rótulos de calles: Norte/Sur a la izquierda, Oriente/Poniente arriba */}
+      {board.horizontalStreets.map((s) => (
+        <text key={s.id} x={LEFT - 38} y={sy(s.index) + (STREET_ALIASES[s.id] ? 0 : 4)} textAnchor="end" className="axis-label">
           {s.name}
           {STREET_ALIASES[s.id] && (
             <tspan x={LEFT - 38} dy="10" className="axis-alias">{STREET_ALIASES[s.id]}</tspan>
           )}
         </text>
       ))}
-      {board.horizontalStreets.map((s) => (
-        <text key={s.id} x={px(s.index)} y={TOP - (STREET_ALIASES[s.id] ? 48 : s.spanM ? 24 : 38)} textAnchor="middle" className="axis-label">
+      {board.verticalStreets.map((s) => (
+        <text key={s.id} x={sx(s.index)} y={TOP - (STREET_ALIASES[s.id] ? 48 : 38)} textAnchor="middle" className="axis-label">
           {s.name}
           {STREET_ALIASES[s.id] && (
-            <tspan x={px(s.index)} dy="10" className="axis-alias">{STREET_ALIASES[s.id]}</tspan>
+            <tspan x={sx(s.index)} dy="10" className="axis-alias">{STREET_ALIASES[s.id]}</tspan>
           )}
         </text>
       ))}
@@ -276,8 +292,8 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         const key = `${n.x},${n.y}`;
         const corner = corners[key];
         const lm = landmarkAtNode(n.x, n.y);
-        const cx = px(n.y);
-        const cy = py(n.x);
+        const cx = sx(n.x);
+        const cy = sy(n.y);
         const size = corner ? CORNER : NODE;
         const line2 = corner ? corner[1] : '';
         if (cardSquares.has(n.id)) {
@@ -333,8 +349,8 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
       {landmarks
         .filter((l) => l.anchor.type === 'segment')
         .map((l) => {
-          const cx = px(l.col);
-          const cy = py(l.row);
+          const cx = sx(l.row);
+          const cy = sy(l.col);
           const wholeBlock = false;
           const halfW = 15;
           const halfH = 15;
@@ -375,7 +391,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
               }}
             >
               <title>Avanzar hasta aquí</title>
-              <circle cx={px(n.y)} cy={py(n.x)} r="17" fill="rgba(212,175,55,0.4)" stroke={GOLD} strokeWidth="3.5" strokeDasharray="5 3" />
+              <circle cx={sx(n.x)} cy={sy(n.y)} r="17" fill="rgba(212,175,55,0.4)" stroke={GOLD} strokeWidth="3.5" strokeDasharray="5 3" />
             </g>
           ))}
 
@@ -387,8 +403,8 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         const slot = mates.findIndex((o) => o.id === t.id);
         const ang = (slot / Math.max(mates.length, 1)) * Math.PI * 2 - Math.PI / 2;
         const off = mates.length > 1 ? 8 : 0;
-        const x = px(n.y) + Math.cos(ang) * off;
-        const y = py(n.x) + Math.sin(ang) * off;
+        const x = sx(n.x) + Math.cos(ang) * off;
+        const y = sy(n.y) + Math.sin(ang) * off;
         return (
           <g key={`tok-${k}`} pointerEvents="none" data-active-token={t.active ? '' : undefined}>
             <circle cx={x} cy={y} r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? '{GOLD}' : INK} strokeWidth={t.active ? 3 : 2} />

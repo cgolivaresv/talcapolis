@@ -22,3 +22,8 @@ body {
   min-height: 100vh;
   background: var(--esmeralda);
 }
+
+/* El tamaño de todo el texto sigue al alto de la ventana, para que la interfaz quepa sin scroll. */
+html {
+  font-size: clamp(11px, 1.55vh, 17px);
+}

@@ -13,9 +13,12 @@ import { landmarkPriceOf } from './properties';
  */
 export type LotKind = 'casa' | 'local' | 'emblematico';
 
-/** Lado de la manzana, tal como se ve en pantalla: arriba, derecha, abajo, izquierda. */
-export type Side = 'N' | 'E' | 'S' | 'W';
-export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
+/**
+ * Lado de la manzana según la calle a la que da, sin depender de cómo se dibuje el tablero:
+ * hacia la calle Poniente o Oriente que la limita, o hacia la calle Sur o Norte.
+ */
+export type Side = 'poniente' | 'oriente' | 'sur' | 'norte';
+export const SIDES: Side[] = ['poniente', 'norte', 'oriente', 'sur'];
 
 export interface Lot {
   id: string;
@@ -63,7 +66,7 @@ export function buildLots(board: Board, landmarks: PlacedLandmark[]): Lot[] {
     barrioAt((rows[r].positionM + rows[r + 1].positionM) / 2, (cols[c].positionM + cols[c + 1].positionM) / 2);
   /** Calle que da a cada lado de la manzana (r,c). */
   const frontOf = (r: number, c: number, side: Side): Street =>
-    side === 'N' ? rows[r] : side === 'S' ? rows[r + 1] : side === 'W' ? cols[c] : cols[c + 1];
+    side === 'poniente' ? rows[r] : side === 'oriente' ? rows[r + 1] : side === 'sur' ? cols[c] : cols[c + 1];
 
   // 1. Edificios emblemáticos: cada uno ocupa un sitio de su manzana.
   const emblemsByCell = new Map<string, Lot[]>();
@@ -81,7 +84,7 @@ export function buildLots(board: Board, landmarks: PlacedLandmark[]): Lot[] {
     const lot: Lot = {
       id: `em:${l.id}`,
       kind: 'emblematico',
-      side: 'N',
+      side: 'poniente',
       frontStreetId: '',
       frontStreetName: '',
       name: l.name,

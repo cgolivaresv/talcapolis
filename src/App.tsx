@@ -32,31 +32,30 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
 
   const [street, setStreet] = useState<Segment | null>(null);
   const [lot, setLot] = useState<Lot | null>(null);
-  // Zoom: por defecto el tablero se ajusta solo al espacio disponible, para que todo quepa sin scroll.
+  // Zoom: por defecto el tablero se ajusta solo al espacio que deja el resto de la pantalla (sin scroll).
+  // Con zoom manual el tablero se desplaza dentro de su marco, que conserva el tamaño ajustado.
   const [manualZoom, setManualZoom] = useState<number | null>(null);
-  const [fitZoom, setFitZoom] = useState(0.5);
-  const zoom = manualZoom ?? fitZoom;
+  const [fit, setFit] = useState({ zoom: 0.5, w: 0, h: 0 });
+  const zoom = manualZoom ?? fit.zoom;
   const changeZoom = (delta: number) => setManualZoom(Math.min(1.5, Math.max(0.2, +(zoom + delta).toFixed(2))));
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const fit = () => {
-      const vb = el.querySelector('svg')?.viewBox.baseVal;
+    const compute = () => {
+      const vb = scrollRef.current?.querySelector('svg')?.viewBox.baseVal;
       if (!vb || !vb.width) return;
-      const stacked = window.innerWidth < 900; // en pantallas angostas el tablero va arriba y se ajusta al ancho
-      const byHeight = el.clientHeight / vb.height;
-      const byWidth = (stacked ? el.clientWidth : window.innerWidth - 700) / vb.width;
-      setFitZoom(Math.max(0.15, +(stacked ? byWidth : Math.min(byHeight, byWidth)).toFixed(3)));
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const stacked = window.innerWidth < 900; // pantallas angostas: el tablero va arriba y se ajusta al ancho
+      const bannerH = document.querySelector('.banner')?.getBoundingClientRect().height ?? 40;
+      // Reserva: columna derecha (22rem), panel de turno bajo el tablero (14rem) y barra de zoom (2.4rem).
+      const availW = window.innerWidth - 24 - 12 - (stacked ? 0 : 22 * rem);
+      const availH = window.innerHeight - 16 - bannerH - 8 - 12 - 2.4 * rem - 14 * rem;
+      const z = stacked ? availW / vb.width : Math.min(availW / vb.width, availH / vb.height);
+      const zoom = Math.max(0.15, Math.floor(z * 1000) / 1000);
+      setFit({ zoom, w: Math.floor(vb.width * zoom), h: Math.floor(vb.height * zoom) });
     };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    window.addEventListener('resize', fit);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', fit);
-    };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
   }, []);
 
   const [game, setGame] = useState(() => newGame(names, seed));
@@ -105,6 +104,9 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
         <p>
           {lots.length} lotes en venta en {BARRIOS.length} barrios · las calles no se compran
         </p>
+        <button type="button" className="new-game" onClick={() => (confirmExit ? onExit() : setConfirmExit(true))} onBlur={() => setConfirmExit(false)}>
+          {confirmExit ? '¿Seguro? Se pierde la partida' : 'Nueva partida'}
+        </button>
       </header>
 
       <div className="layout">
@@ -117,7 +119,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
               Ajustar
             </button>
           </div>
-          <div className="board-scroll" ref={scrollRef}>
+          <div className={manualZoom === null ? 'board-scroll' : 'board-scroll manual'} ref={scrollRef} style={fit.w ? { width: fit.w, height: fit.h } : undefined}>
             <BoardView
               board={board}
               landmarks={landmarks}
@@ -138,6 +140,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
 
         <div className="side">
           <section className="turn" aria-live="polite">
+            <div className="turn-main">
             <h2>
               Turno de <span style={{ color: PLAYER_COLORS[game.current] }}>●</span> {turnOf.id}
               {turnOf.inJail ? ' (preso)' : ''}
@@ -170,17 +173,6 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                   Rechazar
                 </button>
               </div>
-            ) : trading ? (
-              <TradePanel
-                game={game}
-                lots={lots}
-                colors={PLAYER_COLORS}
-                onPropose={(t) => {
-                  setGame((g) => proposeTrade(g, t));
-                  setTrading(false);
-                }}
-                onCancel={() => setTrading(false)}
-              />
             ) : game.buyOptions.length > 0 ? (
               <div className="buy">
                 <p className="turn-hint">Puedes comprar un lote de aquí:</p>
@@ -207,6 +199,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
                 </button>
               </>
             )}
+            </div>
             <ul className="players">
               {game.players.map((p, k) => (
                 <li key={p.id} className={k === game.current ? 'active' : undefined}>
@@ -217,7 +210,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
               ))}
             </ul>
             <ol className="log" reversed>
-              {game.log.slice(-6).reverse().map((l, k) => (
+              {game.log.slice(-5).reverse().map((l, k) => (
                 <li key={game.log.length - k}>{l}</li>
               ))}
             </ol>
@@ -289,32 +282,44 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
           </aside>
 
           <section className="barrios" aria-label="Barrios">
-            <h2>Barrios</h2>
+            <h2>Barrios · lotes</h2>
             <ul>
               {BARRIOS.map((b) => (
                 <li key={b.id} title={`Definido por: ${b.anchorName}`}>
                   <span className="swatch" style={{ background: BARRIO_COLORS[b.id] }} />
-                  {b.name}
-                  <em>{lotsOfBarrio(lots, b.id).length} lotes</em>
+                  {b.name.replace('Barrio ', '')} <em>{lotsOfBarrio(lots, b.id).length}</em>
                 </li>
               ))}
             </ul>
-            <p className="barrios-note">Cada barrio se define por un lugar real de Talca; sus límites son aproximados.</p>
+            <p className="barrios-note">
+              Límites aproximados. Distancias medidas sobre datos de{' '}
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+                © colaboradores de OpenStreetMap
+              </a>{' '}
+              (ODbL).
+            </p>
           </section>
 
-          <footer className="credits">
-            <button type="button" className="new-game" onClick={() => (confirmExit ? onExit() : setConfirmExit(true))} onBlur={() => setConfirmExit(false)}>
-              {confirmExit ? '¿Seguro? Se pierde la partida' : 'Nueva partida'}
-            </button>
-            Distancias entre calles medidas sobre datos de{' '}
-            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-              © colaboradores de OpenStreetMap
-            </a>{' '}
-            (ODbL).
-          </footer>
         </div>
       </div>
 
+      {trading && (
+        <div className="modal" role="dialog" aria-modal="true" aria-label="Proponer intercambio" onClick={() => setTrading(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2>Proponer intercambio</h2>
+            <TradePanel
+              game={game}
+              lots={lots}
+              colors={PLAYER_COLORS}
+              onPropose={(t) => {
+                setGame((g) => proposeTrade(g, t));
+                setTrading(false);
+              }}
+              onCancel={() => setTrading(false)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

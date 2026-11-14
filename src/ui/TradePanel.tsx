@@ -11,7 +11,7 @@ interface Props {
 }
 
 const lotLabel = (l: Lot) =>
-  l.kind === 'emblematico' ? l.name : `${l.kind === 'casa' ? 'Casa' : 'Local'} · ${l.frontStreetName} (${l.manzanaId.replace('mz:', '')})`;
+  l.kind === 'emblematico' ? l.name : `${l.kind === 'casa' ? 'Casa' : 'Local'} · ${l.frontStreetName} (${l.name.split(', ').slice(1).join(', ')})`;
 
 /** Formulario para armar una oferta de intercambio del jugador en turno. */
 export function TradePanel({ game, lots, colors, onPropose, onCancel }: Props) {

@@ -6,12 +6,7 @@ Juego de mesa tipo Monopoly basado en la ciudad de Talca, Chile. Webapp pensada 
 
 Las calles de Talca están numeradas (`N Oriente/Poniente` y `N Norte/Sur`). No existe la calle "0".
 
-Límites (configurables en `src/engine/board.ts`), tal como se ven en pantalla:
-
-- Arriba: **2 Poniente**
-- Abajo: **11 Oriente**
-- Izquierda: **2 Sur**
-- Derecha: **4 Norte**
+Límites (configurables en `src/engine/board.ts`): de **2 Poniente** a **11 Oriente** y de **2 Sur** a **4 Norte**. El tablero se dibuja horizontal, con el mapa real girado 180°: **2 Sur arriba**, 4 Norte abajo, 11 Oriente a la izquierda y 2 Poniente a la derecha (`MIRROR_COLUMNS` en `src/ui/BoardView.tsx` los invierte). La pantalla se ajusta sola a la ventana, sin scroll.
 
 Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 137 tramos sobre 78 intersecciones. **Las calles no se compran.**
 
