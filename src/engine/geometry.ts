@@ -45,6 +45,4 @@ export interface ExtraStreet {
 }
 
 export const EXTRA_STREETS: ExtraStreet[] = [
-  { id: '1.5-norte', name: '1½ Norte', orientation: 'horizontal', positionM: 319, spans: ['5-oriente', '6-oriente'] },
-  { id: '9.5-oriente', name: '9½ Oriente', orientation: 'vertical', positionM: 1362, spans: ['3-norte', '4-norte'] },
 ];

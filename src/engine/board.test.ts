@@ -5,33 +5,22 @@ describe('buildBoard (configuración Talcapolis)', () => {
   const board = buildBoard();
   const names = (list: { name: string }[]) => list.map((s) => s.name);
 
-  it('incluye de 2 Poniente a 11 Oriente sin calle "0", más 9½ Oriente', () => {
+  it('incluye de 2 Poniente a 11 Oriente sin calle "0"', () => {
     const v = names(board.verticalStreets);
-    expect(v).toHaveLength(14);
+    expect(v).toHaveLength(13);
     expect(v.slice(0, 3)).toEqual(['2 Poniente', '1 Poniente', '1 Oriente']);
     expect(v.at(-1)).toBe('11 Oriente');
-    expect(v).toContain('9½ Oriente');
-    expect(v.indexOf('9½ Oriente')).toBe(v.indexOf('9 Oriente') + 1);
   });
 
-  it('incluye de 2 Sur a 4 Norte, más 1½ Norte', () => {
+  it('incluye de 2 Sur a 4 Norte, sin calles intermedias', () => {
     expect(names(board.horizontalStreets)).toEqual([
-      '2 Sur', '1 Sur', '1 Norte', '1½ Norte', '2 Norte', '3 Norte', '4 Norte',
+      '2 Sur', '1 Sur', '1 Norte', '2 Norte', '3 Norte', '4 Norte',
     ]);
   });
 
-  it('genera 82 intersecciones y 143 tramos (casillas)', () => {
-    expect(board.intersections).toHaveLength(82);
-    expect(board.segments).toHaveLength(143);
-  });
-
-  it('las calles parciales solo se cruzan dentro de su tramo', () => {
-    const cross = (id: string) =>
-      board.intersections
-        .filter((i) => i.vertical.id === id || i.horizontal.id === id)
-        .map((i) => (i.vertical.id === id ? i.horizontal.id : i.vertical.id));
-    expect(cross('1.5-norte')).toEqual(['5-oriente', '6-oriente']);
-    expect(cross('9.5-oriente').sort()).toEqual(['3-norte', '4-norte']);
+  it('genera 78 intersecciones y 137 tramos (casillas)', () => {
+    expect(board.intersections).toHaveLength(78);
+    expect(board.segments).toHaveLength(137);
   });
 
   it('cada tramo une dos intersecciones que existen', () => {
@@ -57,14 +46,4 @@ describe('buildBoard (configuración Talcapolis)', () => {
     ).toThrow();
   });
 
-  it('sin las calles entre las que existe, una calle intermedia no se incluye', () => {
-    const small = buildBoard({
-      west: { side: 'Poniente', n: 2 },
-      east: { side: 'Oriente', n: 4 },
-      south: { side: 'Sur', n: 2 },
-      north: { side: 'Norte', n: 4 },
-    });
-    expect(small.horizontalStreets.map((s) => s.id)).not.toContain('1.5-norte');
-    expect(small.verticalStreets.map((s) => s.id)).not.toContain('9.5-oriente');
-  });
 });
