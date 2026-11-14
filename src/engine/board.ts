@@ -39,7 +39,11 @@ export interface Street {
   orientation: 'vertical' | 'horizontal';
   /** Posición en su eje: vertical => x; horizontal => y. */
   index: number;
+  /** Grupo de color estilo Monopoly (0-7), repartido a lo largo del eje de la calle. */
+  group: number;
 }
+
+export const GROUP_COUNT = 8;
 
 export interface Intersection {
   id: string;
@@ -73,14 +77,14 @@ const slug = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
 function verticalStreet(signed: number, index: number): Street {
   const side: Side = signed < 0 ? 'Poniente' : 'Oriente';
   const name = `${Math.abs(signed)} ${side}`;
-  return { id: slug(name), name, orientation: 'vertical', index };
+  return { id: slug(name), name, orientation: 'vertical', index, group: 0 };
 }
 
 /** Convierte un valor con signo (Sur < 0, Norte > 0) a calle. */
 function horizontalStreet(signed: number, index: number): Street {
   const side: Side = signed < 0 ? 'Sur' : 'Norte';
   const name = `${Math.abs(signed)} ${side}`;
-  return { id: slug(name), name, orientation: 'horizontal', index };
+  return { id: slug(name), name, orientation: 'horizontal', index, group: 0 };
 }
 
 /** Rango de enteros con signo saltándose el 0 (no existe la calle "0"). */
@@ -101,6 +105,10 @@ export function buildBoard(config: BoardConfig = TALCAPOLIS_CONFIG): Board {
 
   const verticalStreets = signedRange(westV, eastV).map((v, i) => verticalStreet(v, i));
   const horizontalStreets = signedRange(southV, northV).map((v, i) => horizontalStreet(v, i));
+
+  for (const list of [verticalStreets, horizontalStreets]) {
+    for (const s of list) s.group = Math.floor((s.index * GROUP_COUNT) / list.length);
+  }
 
   const intersections: Intersection[] = [];
   for (const h of horizontalStreets) {
