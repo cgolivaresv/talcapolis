@@ -1,0 +1,466 @@
+{
+ "meta": {
+  "source": "OpenStreetMap (Overpass API)",
+  "license": "ODbL, © colaboradores de OpenStreetMap",
+  "origin": {
+   "lat": -35.4264,
+   "lon": -71.6555
+  },
+  "units": "metros; x = oriente, y = norte",
+  "generatedAt": "2026-11-14",
+  "directionNote": "forward = de 'from' a 'to' del tramo"
+ },
+ "intersections": {
+  "2-poniente/2-sur": {
+   "x": -1152.1,
+   "y": -182.1
+  },
+  "1-poniente/2-sur": {
+   "x": -1029.4,
+   "y": -197
+  },
+  "1-oriente/2-sur": {
+   "x": -904.6,
+   "y": -207.8
+  },
+  "2-oriente/2-sur": {
+   "x": -780.7,
+   "y": -225.4
+  },
+  "3-oriente/2-sur": {
+   "x": -658.3,
+   "y": -239.2
+  },
+  "4-oriente/2-sur": {
+   "x": -532.5,
+   "y": -249.7
+  },
+  "5-oriente/2-sur": {
+   "x": -402.4,
+   "y": -260.7
+  },
+  "6-oriente/2-sur": {
+   "x": -276.5,
+   "y": -275.1
+  },
+  "7-oriente/2-sur": {
+   "x": -147.1,
+   "y": -245.6
+  },
+  "8-oriente/2-sur": {
+   "x": -6.2,
+   "y": -307.1
+  },
+  "9-oriente/2-sur": {
+   "x": 118.4,
+   "y": -311.4
+  },
+  "10-oriente/2-sur": {
+   "x": 298.7,
+   "y": -334.3
+  },
+  "11-oriente/2-sur": {
+   "x": 446.6,
+   "y": -352.7
+  },
+  "2-poniente/1-sur": {
+   "x": -1141.8,
+   "y": -61.6
+  },
+  "1-poniente/1-sur": {
+   "x": -1015.1,
+   "y": -72.2
+  },
+  "1-oriente/1-sur": {
+   "x": -897,
+   "y": -77.9
+  },
+  "2-oriente/1-sur": {
+   "x": -768.5,
+   "y": -99.6
+  },
+  "3-oriente/1-sur": {
+   "x": -648.5,
+   "y": -110.7
+  },
+  "4-oriente/1-sur": {
+   "x": -523.2,
+   "y": -123.7
+  },
+  "5-oriente/1-sur": {
+   "x": -396.2,
+   "y": -133.5
+  },
+  "6-oriente/1-sur": {
+   "x": -264.3,
+   "y": -149.6
+  },
+  "7-oriente/1-sur": {
+   "x": -135.7,
+   "y": -157.1
+  },
+  "8-oriente/1-sur": {
+   "x": -8.4,
+   "y": -174.8
+  },
+  "9-oriente/1-sur": {
+   "x": 120,
+   "y": -185.5
+  },
+  "10-oriente/1-sur": {
+   "x": 314.3,
+   "y": -207
+  },
+  "11-oriente/1-sur": {
+   "x": 469.7,
+   "y": -220.3
+  },
+  "2-poniente/1-norte": {
+   "x": -1129.9,
+   "y": 66
+  },
+  "1-poniente/1-norte": {
+   "x": -1008.3,
+   "y": 50.5
+  },
+  "1-oriente/1-norte": {
+   "x": -883.8,
+   "y": 38.6
+  },
+  "2-oriente/1-norte": {
+   "x": -761.1,
+   "y": 27.9
+  },
+  "3-oriente/1-norte": {
+   "x": -637.2,
+   "y": 18.3
+  },
+  "4-oriente/1-norte": {
+   "x": -514.1,
+   "y": 1.5
+  },
+  "5-oriente/1-norte": {
+   "x": -388.7,
+   "y": -11.4
+  },
+  "6-oriente/1-norte": {
+   "x": -259.3,
+   "y": -28.6
+  },
+  "7-oriente/1-norte": {
+   "x": -128.6,
+   "y": -37
+  },
+  "8-oriente/1-norte": {
+   "x": -6.8,
+   "y": -52.4
+  },
+  "9-oriente/1-norte": {
+   "x": 119.4,
+   "y": -61.6
+  },
+  "10-oriente/1-norte": {
+   "x": 327.3,
+   "y": -90.1
+  },
+  "11-oriente/1-norte": {
+   "x": 479.7,
+   "y": -105.5
+  },
+  "2-poniente/2-norte": {
+   "x": -1127.4,
+   "y": 208.4
+  },
+  "1-poniente/2-norte": {
+   "x": -994.4,
+   "y": 202.8
+  },
+  "1-oriente/2-norte": {
+   "x": -872.6,
+   "y": 190.8
+  },
+  "2-oriente/2-norte": {
+   "x": -745.4,
+   "y": 177.6
+  },
+  "3-oriente/2-norte": {
+   "x": -625.5,
+   "y": 169.3
+  },
+  "4-oriente/2-norte": {
+   "x": -498.4,
+   "y": 155.3
+  },
+  "5-oriente/2-norte": {
+   "x": -377.7,
+   "y": 147
+  },
+  "6-oriente/2-norte": {
+   "x": -246.5,
+   "y": 130.5
+  },
+  "7-oriente/2-norte": {
+   "x": -99.1,
+   "y": 118.3
+  },
+  "8-oriente/2-norte": {
+   "x": 1.3,
+   "y": 103.3
+  },
+  "9-oriente/2-norte": {
+   "x": 120.7,
+   "y": 93.2
+  },
+  "10-oriente/2-norte": {
+   "x": 346.5,
+   "y": 68.5
+  },
+  "11-oriente/2-norte": {
+   "x": 497.1,
+   "y": 45.6
+  },
+  "2-poniente/3-norte": {
+   "x": -1112.4,
+   "y": 341.8
+  },
+  "1-poniente/3-norte": {
+   "x": -989.2,
+   "y": 326.8
+  },
+  "1-oriente/3-norte": {
+   "x": -864.8,
+   "y": 314.1
+  },
+  "2-oriente/3-norte": {
+   "x": -737.7,
+   "y": 297.5
+  },
+  "3-oriente/3-norte": {
+   "x": -614.4,
+   "y": 290.8
+  },
+  "4-oriente/3-norte": {
+   "x": -490.4,
+   "y": 274.6
+  },
+  "5-oriente/3-norte": {
+   "x": -369.7,
+   "y": 259.3
+  },
+  "6-oriente/3-norte": {
+   "x": -240.7,
+   "y": 250.4
+  },
+  "7-oriente/3-norte": {
+   "x": -75.1,
+   "y": 230.5
+  },
+  "8-oriente/3-norte": {
+   "x": -0.1,
+   "y": 227.4
+  },
+  "9-oriente/3-norte": {
+   "x": 116.5,
+   "y": 218.5
+  },
+  "10-oriente/3-norte": {
+   "x": 361.1,
+   "y": 187
+  },
+  "11-oriente/3-norte": {
+   "x": 505.1,
+   "y": 155
+  },
+  "2-poniente/4-norte": {
+   "x": -1101,
+   "y": 521.4
+  },
+  "1-poniente/4-norte": {
+   "x": -978.9,
+   "y": 465.5
+  },
+  "1-oriente/4-norte": {
+   "x": -852.4,
+   "y": 483.6
+  },
+  "2-oriente/4-norte": {
+   "x": -726.6,
+   "y": 441.1
+  },
+  "3-oriente/4-norte": {
+   "x": -600.8,
+   "y": 472
+  },
+  "4-oriente/4-norte": {
+   "x": -480.2,
+   "y": 422
+  },
+  "5-oriente/4-norte": {
+   "x": -365.4,
+   "y": 411.4
+  },
+  "6-oriente/4-norte": {
+   "x": -230.3,
+   "y": 433.2
+  },
+  "7-oriente/4-norte": {
+   "x": -92.9,
+   "y": 388.3
+  },
+  "8-oriente/4-norte": {
+   "x": 15.6,
+   "y": 413.1
+  },
+  "9-oriente/4-norte": {
+   "x": 122.6,
+   "y": 398.3
+  },
+  "10-oriente/4-norte": {
+   "x": 385.1,
+   "y": 369.8
+  },
+  "11-oriente/4-norte": {
+   "x": 520.7,
+   "y": 353.7
+  }
+ },
+ "directions": {
+  "2-sur:2-poniente-1-poniente": "both",
+  "2-sur:1-poniente-1-oriente": "both",
+  "2-sur:1-oriente-2-oriente": "both",
+  "2-sur:2-oriente-3-oriente": "both",
+  "2-sur:3-oriente-4-oriente": "both",
+  "2-sur:4-oriente-5-oriente": "both",
+  "2-sur:5-oriente-6-oriente": "both",
+  "2-sur:6-oriente-7-oriente": "both",
+  "2-sur:7-oriente-8-oriente": "both",
+  "2-sur:8-oriente-9-oriente": "both",
+  "2-sur:9-oriente-10-oriente": "both",
+  "2-sur:10-oriente-11-oriente": "both",
+  "1-sur:2-poniente-1-poniente": "backward",
+  "1-sur:1-poniente-1-oriente": "backward",
+  "1-sur:1-oriente-2-oriente": "backward",
+  "1-sur:2-oriente-3-oriente": "backward",
+  "1-sur:3-oriente-4-oriente": "both",
+  "1-sur:4-oriente-5-oriente": "both",
+  "1-sur:5-oriente-6-oriente": "both",
+  "1-sur:6-oriente-7-oriente": "backward",
+  "1-sur:7-oriente-8-oriente": "backward",
+  "1-sur:8-oriente-9-oriente": "backward",
+  "1-sur:9-oriente-10-oriente": "backward",
+  "1-sur:10-oriente-11-oriente": "backward",
+  "1-norte:2-poniente-1-poniente": "forward",
+  "1-norte:1-poniente-1-oriente": "forward",
+  "1-norte:1-oriente-2-oriente": "forward",
+  "1-norte:2-oriente-3-oriente": "forward",
+  "1-norte:3-oriente-4-oriente": "forward",
+  "1-norte:4-oriente-5-oriente": "forward",
+  "1-norte:5-oriente-6-oriente": "forward",
+  "1-norte:6-oriente-7-oriente": "forward",
+  "1-norte:7-oriente-8-oriente": "forward",
+  "1-norte:8-oriente-9-oriente": "forward",
+  "1-norte:9-oriente-10-oriente": "forward",
+  "1-norte:10-oriente-11-oriente": "forward",
+  "2-norte:2-poniente-1-poniente": "backward",
+  "2-norte:1-poniente-1-oriente": "backward",
+  "2-norte:1-oriente-2-oriente": "backward",
+  "2-norte:2-oriente-3-oriente": "backward",
+  "2-norte:3-oriente-4-oriente": "backward",
+  "2-norte:4-oriente-5-oriente": "backward",
+  "2-norte:5-oriente-6-oriente": "backward",
+  "2-norte:6-oriente-7-oriente": "backward",
+  "2-norte:7-oriente-8-oriente": "backward",
+  "2-norte:8-oriente-9-oriente": "backward",
+  "2-norte:9-oriente-10-oriente": "backward",
+  "2-norte:10-oriente-11-oriente": "backward",
+  "3-norte:2-poniente-1-poniente": "forward",
+  "3-norte:1-poniente-1-oriente": "forward",
+  "3-norte:1-oriente-2-oriente": "forward",
+  "3-norte:2-oriente-3-oriente": "forward",
+  "3-norte:3-oriente-4-oriente": "forward",
+  "3-norte:4-oriente-5-oriente": "forward",
+  "3-norte:5-oriente-6-oriente": "forward",
+  "3-norte:6-oriente-7-oriente": "forward",
+  "3-norte:7-oriente-8-oriente": "forward",
+  "3-norte:8-oriente-9-oriente": "forward",
+  "3-norte:9-oriente-10-oriente": "forward",
+  "3-norte:10-oriente-11-oriente": "forward",
+  "4-norte:2-poniente-1-poniente": "both",
+  "4-norte:1-poniente-1-oriente": "forward",
+  "4-norte:1-oriente-2-oriente": "forward",
+  "4-norte:2-oriente-3-oriente": "both",
+  "4-norte:3-oriente-4-oriente": "both",
+  "4-norte:4-oriente-5-oriente": "forward",
+  "4-norte:5-oriente-6-oriente": "forward",
+  "4-norte:6-oriente-7-oriente": "forward",
+  "4-norte:7-oriente-8-oriente": "forward",
+  "4-norte:8-oriente-9-oriente": "both",
+  "4-norte:9-oriente-10-oriente": "both",
+  "4-norte:10-oriente-11-oriente": "both",
+  "2-poniente:2-sur-1-sur": "forward",
+  "2-poniente:1-sur-1-norte": "forward",
+  "2-poniente:1-norte-2-norte": "forward",
+  "2-poniente:2-norte-3-norte": "forward",
+  "2-poniente:3-norte-4-norte": "forward",
+  "1-poniente:2-sur-1-sur": "forward",
+  "1-poniente:1-sur-1-norte": "forward",
+  "1-poniente:1-norte-2-norte": "forward",
+  "1-poniente:2-norte-3-norte": "forward",
+  "1-poniente:3-norte-4-norte": "forward",
+  "1-oriente:2-sur-1-sur": "backward",
+  "1-oriente:1-sur-1-norte": "backward",
+  "1-oriente:1-norte-2-norte": "backward",
+  "1-oriente:2-norte-3-norte": "backward",
+  "1-oriente:3-norte-4-norte": "backward",
+  "2-oriente:2-sur-1-sur": "forward",
+  "2-oriente:1-sur-1-norte": "forward",
+  "2-oriente:1-norte-2-norte": "forward",
+  "2-oriente:2-norte-3-norte": "forward",
+  "2-oriente:3-norte-4-norte": "forward",
+  "3-oriente:2-sur-1-sur": "backward",
+  "3-oriente:1-sur-1-norte": "backward",
+  "3-oriente:1-norte-2-norte": "backward",
+  "3-oriente:2-norte-3-norte": "backward",
+  "3-oriente:3-norte-4-norte": "backward",
+  "4-oriente:2-sur-1-sur": "forward",
+  "4-oriente:1-sur-1-norte": "forward",
+  "4-oriente:1-norte-2-norte": "forward",
+  "4-oriente:2-norte-3-norte": "forward",
+  "4-oriente:3-norte-4-norte": "forward",
+  "5-oriente:2-sur-1-sur": "backward",
+  "5-oriente:1-sur-1-norte": "backward",
+  "5-oriente:1-norte-2-norte": "backward",
+  "5-oriente:2-norte-3-norte": "backward",
+  "5-oriente:3-norte-4-norte": "backward",
+  "6-oriente:2-sur-1-sur": "forward",
+  "6-oriente:1-sur-1-norte": "forward",
+  "6-oriente:1-norte-2-norte": "forward",
+  "6-oriente:2-norte-3-norte": "forward",
+  "6-oriente:3-norte-4-norte": "forward",
+  "7-oriente:2-sur-1-sur": "backward",
+  "7-oriente:1-sur-1-norte": "backward",
+  "7-oriente:1-norte-2-norte": "backward",
+  "7-oriente:2-norte-3-norte": "both",
+  "7-oriente:3-norte-4-norte": "backward",
+  "8-oriente:2-sur-1-sur": "forward",
+  "8-oriente:1-sur-1-norte": "forward",
+  "8-oriente:1-norte-2-norte": "forward",
+  "8-oriente:2-norte-3-norte": "forward",
+  "8-oriente:3-norte-4-norte": "forward",
+  "9-oriente:2-sur-1-sur": "backward",
+  "9-oriente:1-sur-1-norte": "backward",
+  "9-oriente:1-norte-2-norte": "backward",
+  "9-oriente:2-norte-3-norte": "backward",
+  "9-oriente:3-norte-4-norte": "backward",
+  "10-oriente:2-sur-1-sur": "forward",
+  "10-oriente:1-sur-1-norte": "forward",
+  "10-oriente:1-norte-2-norte": "forward",
+  "10-oriente:2-norte-3-norte": "forward",
+  "10-oriente:3-norte-4-norte": "forward",
+  "11-oriente:2-sur-1-sur": "both",
+  "11-oriente:1-sur-1-norte": "both",
+  "11-oriente:1-norte-2-norte": "both",
+  "11-oriente:2-norte-3-norte": "both",
+  "11-oriente:3-norte-4-norte": "both"
+ }
+}

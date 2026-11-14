@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Board, Intersection, Segment } from '../engine/board';
+import type { Board, Intersection, Segment, Street } from '../engine/board';
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
 
 /** Colores de los grupos, como en el Monopoly clásico. */
@@ -14,7 +14,7 @@ export const GROUP_COLORS = [
   '#0072bb', // azul
 ] as const;
 
-const S = 84; // distancia entre intersecciones
+const K = 0.7; // píxeles por metro real
 const LEFT = 118;
 const TOP = 70;
 const TILE = 26; // grosor de la ficha
@@ -36,14 +36,23 @@ interface Props {
  *   fila    = índice de calle Oriente/Poniente (2 Poniente arriba, 11 Oriente abajo)
  *   columna = índice de calle Norte/Sur        (2 Sur a la izquierda, 4 Norte a la derecha)
  */
-const px = (col: number) => LEFT + col * S;
-const py = (row: number) => TOP + row * S;
+/** Posición en metros de una coordenada de grilla (posible fraccionaria), interpolando entre calles. */
+function lerpM(streets: Street[], f: number): number {
+  const i = Math.min(Math.floor(f), streets.length - 1);
+  const t = f - i;
+  const a = streets[i].positionM;
+  const b = streets[Math.min(i + 1, streets.length - 1)].positionM;
+  return a + (b - a) * t;
+}
 
 export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, onSelect, onSelectLandmark }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
-  const width = LEFT + (cols - 1) * S + 70;
-  const height = TOP + (rows - 1) * S + 70;
+  // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
+  const px = (col: number) => LEFT + K * lerpM(board.horizontalStreets, col);
+  const py = (row: number) => TOP + K * lerpM(board.verticalStreets, row);
+  const width = px(cols - 1) + 70;
+  const height = py(rows - 1) + 70;
 
   const byId = useMemo(() => new Map(board.intersections.map((i) => [i.id, i])), [board]);
 
@@ -94,8 +103,8 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, on
             key={`b${r}-${c}`}
             x={px(c) + GAP + 6}
             y={py(r) + GAP + 6}
-            width={S - 2 * GAP - 12}
-            height={S - 2 * GAP - 12}
+            width={px(c + 1) - px(c) - 2 * GAP - 12}
+            height={py(r + 1) - py(r) - 2 * GAP - 12}
             rx="3"
             fill="#e9f4e4"
             stroke="#b7d3b9"
@@ -191,15 +200,16 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, on
           const cx = px(l.col);
           const cy = py(l.row);
           const isPlaza = l.id === 'plaza-de-armas';
-          const half = isPlaza ? (S - 2 * GAP - 12) / 2 : 15;
+          const halfW = isPlaza ? (px(l.col + 0.5) - px(l.col - 0.5)) / 2 - GAP - 6 : 15;
+          const halfH = isPlaza ? (py(l.row + 0.5) - py(l.row - 0.5)) / 2 - GAP - 6 : 15;
           return (
             <g key={l.id} className="landmark" onClick={landmarkClick(l)}>
               <title>{l.name}</title>
               <rect
-                x={cx - half}
-                y={cy - half}
-                width={half * 2}
-                height={half * 2}
+                x={cx - halfW}
+                y={cy - halfH}
+                width={halfW * 2}
+                height={halfH * 2}
                 rx={isPlaza ? 3 : 4}
                 fill={isPlaza ? '#7ec27e' : '#fff6d6'}
                 stroke="#111"

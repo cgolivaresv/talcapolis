@@ -67,6 +67,14 @@ export default function App() {
           )}
         </aside>
       </div>
+
+      <footer className="credits">
+        Distancias entre calles medidas sobre datos de{' '}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+          © colaboradores de OpenStreetMap
+        </a>{' '}
+        (ODbL).
+      </footer>
     </main>
   );
 }

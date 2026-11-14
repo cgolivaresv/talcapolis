@@ -38,7 +38,7 @@
 }
 
 .board {
-  width: min(100%, 460px);
+  width: min(100%, 520px);
   height: auto;
   background: #fff;
   border-radius: 10px;
@@ -151,4 +151,15 @@
 .landmark-icon {
   font-size: 2rem;
   letter-spacing: 0;
+}
+
+.credits {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #d8ecd8;
+}
+
+.credits a {
+  color: #fff;
 }

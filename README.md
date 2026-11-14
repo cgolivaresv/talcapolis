@@ -15,6 +15,10 @@ Límites (configurables en `src/engine/board.ts`), tal como se ven en pantalla:
 
 Cada **tramo de calle entre dos intersecciones** es una casilla/propiedad: 137 casillas sobre 78 intersecciones.
 
+Las distancias entre calles son las **reales** (cuadras de ~125 m, con tramos más largos donde existen calles intermedias como 9½ Oriente). Se midieron sobre las intersecciones de OpenStreetMap y están en `src/engine/geometry.ts`.
+
+Datos de mapa © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright), licencia ODbL.
+
 ## Stack
 
 TypeScript, Vite, React, Zustand, Vitest, Playwright, PWA. El motor de juego (`src/engine`) es puro y serializable, separado de la UI, para permitir tests deterministas y un multijugador online futuro.

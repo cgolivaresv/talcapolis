@@ -1,3 +1,5 @@
+import { STREET_POSITIONS_M } from './geometry';
+
 /**
  * Modelo del tablero de Talcapolis.
  *
@@ -41,7 +43,12 @@ export interface Street {
   index: number;
   /** Grupo de color estilo Monopoly (0-7), repartido a lo largo del eje de la calle. */
   group: number;
+  /** Posición real en metros desde el borde del tablero (ver geometry.ts). */
+  positionM: number;
 }
+
+/** Distancia típica entre calles (m), usada si una calle no tiene posición medida. */
+const DEFAULT_SPACING_M = 125;
 
 export const GROUP_COUNT = 8;
 
@@ -77,14 +84,16 @@ const slug = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
 function verticalStreet(signed: number, index: number): Street {
   const side: Side = signed < 0 ? 'Poniente' : 'Oriente';
   const name = `${Math.abs(signed)} ${side}`;
-  return { id: slug(name), name, orientation: 'vertical', index, group: 0 };
+  const id = slug(name);
+  return { id, name, orientation: 'vertical', index, group: 0, positionM: STREET_POSITIONS_M[id] ?? index * DEFAULT_SPACING_M };
 }
 
 /** Convierte un valor con signo (Sur < 0, Norte > 0) a calle. */
 function horizontalStreet(signed: number, index: number): Street {
   const side: Side = signed < 0 ? 'Sur' : 'Norte';
   const name = `${Math.abs(signed)} ${side}`;
-  return { id: slug(name), name, orientation: 'horizontal', index, group: 0 };
+  const id = slug(name);
+  return { id, name, orientation: 'horizontal', index, group: 0, positionM: STREET_POSITIONS_M[id] ?? index * DEFAULT_SPACING_M };
 }
 
 /** Rango de enteros con signo saltándose el 0 (no existe la calle "0"). */
