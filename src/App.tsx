@@ -11,7 +11,7 @@ export default function App() {
   const landmarks = useMemo(() => placeLandmarks(board), [board]);
   const [selected, setSelected] = useState<Segment | null>(null);
   const [selectedLandmark, setSelectedLandmark] = useState<PlacedLandmark | null>(null);
-  const [zoom, setZoom] = useState(0.55);
+  const [zoom, setZoom] = useState(0.75);
   const changeZoom = (delta: number) => setZoom((z) => Math.min(1.5, Math.max(0.3, +(z + delta).toFixed(2))));
 
   const selectSegment = (s: Segment | null) => {

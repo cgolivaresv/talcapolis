@@ -16,7 +16,7 @@ export const GROUP_COLORS = [
 ] as const;
 
 const K = 1.1; // píxeles por metro real (las calles intermedias están a ~65 m)
-const LEFT = 118;
+const LEFT = 136;
 const TOP = 70;
 const TILE = 26; // grosor de la ficha
 const GAP = 19; // espacio reservado a la intersección
@@ -56,6 +56,8 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
   const py = (row: number) => TOP + K * lerpM(board.verticalStreets, row);
   const width = px(cols - 1) + 70;
   const height = py(rows - 1) + 70;
+  const fullRows = board.verticalStreets.filter((s) => !s.spanM);
+  const fullCols = board.horizontalStreets.filter((s) => !s.spanM);
 
   const byId = useMemo(() => new Map(board.intersections.map((i) => [i.id, i])), [board]);
 
@@ -148,15 +150,15 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
       <rect x="4" y="4" width={width - 8} height={height - 8} rx="10" fill="#cde6d0" stroke="#111" strokeWidth="4" />
       <rect x="12" y="12" width={width - 24} height={height - 24} rx="6" fill="none" stroke="#111" strokeWidth="1.5" />
 
-      {/* Manzanas */}
-      {Array.from({ length: rows - 1 }, (_, r) =>
-        Array.from({ length: cols - 1 }, (_, c) => (
+      {/* Manzanas: entre calles enteras consecutivas; las calles parciales cruzan por encima */}
+      {fullRows.slice(0, -1).map((r, i) =>
+        fullCols.slice(0, -1).map((c, j) => (
           <rect
-            key={`b${r}-${c}`}
-            x={px(c) + GAP + 6}
-            y={py(r) + GAP + 6}
-            width={px(c + 1) - px(c) - 2 * GAP - 12}
-            height={py(r + 1) - py(r) - 2 * GAP - 12}
+            key={`b${r.index}-${c.index}`}
+            x={px(c.index) + GAP + 6}
+            y={py(r.index) + GAP + 6}
+            width={px(fullCols[j + 1].index) - px(c.index) - 2 * GAP - 12}
+            height={py(fullRows[i + 1].index) - py(r.index) - 2 * GAP - 12}
             rx="3"
             fill="#e9f4e4"
             stroke="#b7d3b9"
@@ -174,7 +176,7 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zo
         </text>
       ))}
       {board.horizontalStreets.map((s) => (
-        <text key={s.id} x={px(s.index)} y={TOP - (STREET_ALIASES[s.id] ? 48 : 38)} textAnchor="middle" className="axis-label">
+        <text key={s.id} x={px(s.index)} y={TOP - (STREET_ALIASES[s.id] ? 48 : s.spanM ? 24 : 38)} textAnchor="middle" className="axis-label">
           {s.name}
           {STREET_ALIASES[s.id] && (
             <tspan x={px(s.index)} dy="10" className="axis-alias">{STREET_ALIASES[s.id]}</tspan>
