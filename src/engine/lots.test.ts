@@ -2,7 +2,7 @@
 import { BARRIOS, barrioAt } from './barrios';
 import { buildBoard } from './board';
 import { placeLandmarks } from './landmarks';
-import { MIN_SITES_PER_MANZANA, buildLots, lotsOfBarrio, lotsOfManzana } from './lots';
+import { MIN_SITES_PER_MANZANA, SITES_PER_MANZANA, buildLots, lotsFacingStreet, lotsOfBarrio, lotsOfManzana } from './lots';
 
 describe('lotes y barrios', () => {
   const board = buildBoard();
@@ -13,6 +13,22 @@ describe('lotes y barrios', () => {
   it('hay 60 manzanas y cada una tiene al menos 3 sitios', () => {
     expect(manzanaIds).toHaveLength(60);
     for (const id of manzanaIds) expect(lotsOfManzana(lots, id).length).toBeGreaterThanOrEqual(MIN_SITES_PER_MANZANA);
+  });
+
+  it('cada manzana tiene un sitio por cada calle que la rodea', () => {
+    for (const id of manzanaIds) {
+      const sides = lotsOfManzana(lots, id).map((l) => l.side).sort();
+      expect(sides).toEqual(['E', 'N', 'S', 'W']);
+      expect(lotsOfManzana(lots, id)).toHaveLength(SITES_PER_MANZANA);
+    }
+  });
+
+  it('toda calle entera tiene sitios a sus dos lados', () => {
+    const fronts = lots.map((l) => l.frontStreetId);
+    for (const id of new Set(fronts)) {
+      const n = lotsFacingStreet(lots, id).length;
+      expect(n).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it('están los 19 edificios emblemáticos, además de casas y locales comerciales', () => {

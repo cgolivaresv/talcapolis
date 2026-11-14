@@ -132,6 +132,7 @@ export default function App() {
                   <strong>{lot.kind === 'emblematico' ? lot.name : KIND_LABEL[lot.kind]}</strong>
                 </div>
                 <p className="deed-between">{lot.kind === 'emblematico' ? lm?.where : lot.name.split(', ').slice(1).join(', ')}</p>
+                <p className="deed-between">Da a: <strong>{lot.frontStreetName}</strong></p>
                 <p className="deed-barrio">
                   <span className="swatch" style={{ background: BARRIO_COLORS[lot.barrio] }} /> {barrio.name}
                 </p>

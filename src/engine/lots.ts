@@ -5,16 +5,26 @@ import { landmarkPriceOf } from './properties';
 
 /**
  * Lotes: lo único que se compra en Talcapolis. Las calles no se compran.
- * Cada manzana (cuadra) tiene al menos 3 sitios, que pueden ser:
+ * Cada manzana (cuadra) se divide en 4 sitios, uno por cada calle que la rodea, de modo que
+ * a ambos lados de una calle hay propiedades. Cada sitio puede ser:
  *   - casa
  *   - local comercial (cuesta el doble que una casa del mismo barrio)
  *   - edificio emblemático (ocupa uno de los sitios de su manzana)
  */
 export type LotKind = 'casa' | 'local' | 'emblematico';
 
+/** Lado de la manzana, tal como se ve en pantalla: arriba, derecha, abajo, izquierda. */
+export type Side = 'N' | 'E' | 'S' | 'W';
+export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
+
 export interface Lot {
   id: string;
   kind: LotKind;
+  /** Lado de la manzana al que da el sitio. */
+  side: Side;
+  /** Calle a la que da el sitio (su frente). */
+  frontStreetId: string;
+  frontStreetName: string;
   name: string;
   barrio: number;
   price: number;
@@ -27,6 +37,8 @@ export interface Lot {
 
 /** Sitios mínimos por manzana. */
 export const MIN_SITES_PER_MANZANA = 3;
+/** Sitios por manzana: uno por cada calle que la rodea. */
+export const SITES_PER_MANZANA = SIDES.length;
 
 const fullStreets = (list: Street[]) => list.filter((s) => !s.spanM);
 
@@ -49,6 +61,9 @@ export function buildLots(board: Board, landmarks: PlacedLandmark[]): Lot[] {
   const manzanaName = (r: number, c: number) => `${rows[r].name} a ${rows[r + 1].name}, ${cols[c].name} a ${cols[c + 1].name}`;
   const barrioOfCell = (r: number, c: number) =>
     barrioAt((rows[r].positionM + rows[r + 1].positionM) / 2, (cols[c].positionM + cols[c + 1].positionM) / 2);
+  /** Calle que da a cada lado de la manzana (r,c). */
+  const frontOf = (r: number, c: number, side: Side): Street =>
+    side === 'N' ? rows[r] : side === 'S' ? rows[r + 1] : side === 'W' ? cols[c] : cols[c + 1];
 
   // 1. Edificios emblemáticos: cada uno ocupa un sitio de su manzana.
   const emblemsByCell = new Map<string, Lot[]>();
@@ -66,6 +81,9 @@ export function buildLots(board: Board, landmarks: PlacedLandmark[]): Lot[] {
     const lot: Lot = {
       id: `em:${l.id}`,
       kind: 'emblematico',
+      side: 'N',
+      frontStreetId: '',
+      frontStreetName: '',
       name: l.name,
       barrio: barrioOfCell(cell.row, cell.col),
       price: landmarkPriceOf(l.id),
@@ -77,27 +95,34 @@ export function buildLots(board: Board, landmarks: PlacedLandmark[]): Lot[] {
     emblemsByCell.set(key, [...(emblemsByCell.get(key) ?? []), lot]);
   }
 
-  // 2. Cada manzana se completa con casas y locales hasta tener al menos 3 sitios.
+  // 2. Cada manzana tiene un sitio por lado: los edificios emblemáticos ocupan los primeros
+  //    y el resto se completa con casas y locales.
   const lots: Lot[] = [];
   for (let r = 0; r < rows.length - 1; r++) {
     for (let c = 0; c < cols.length - 1; c++) {
       const emblems = emblemsByCell.get(`${r},${c}`) ?? [];
-      lots.push(...emblems);
       const barrio = barrioOfCell(r, c);
-      const generic = Math.max(0, MIN_SITES_PER_MANZANA - emblems.length);
-      for (let g = 0; g < generic; g++) {
-        const kind: LotKind = (r + c + g) % 3 === 0 ? 'local' : 'casa';
-        const base = BARRIOS[barrio].casaPrice;
+      const base = BARRIOS[barrio].casaPrice;
+      SIDES.forEach((side, k) => {
+        const front = frontOf(r, c, side);
+        const where = { side, frontStreetId: front.id, frontStreetName: front.name };
+        const emblem = emblems[k];
+        if (emblem) {
+          lots.push({ ...emblem, ...where });
+          return;
+        }
+        const kind: LotKind = (r + c + k) % 3 === 0 ? 'local' : 'casa';
         lots.push({
-          id: `${manzanaId(r, c)}#${g + 1}`,
+          id: `${manzanaId(r, c)}#${side}`,
           kind,
-          name: `${kind === 'casa' ? 'Casa' : 'Local comercial'} ${g + 1}, ${manzanaName(r, c)}`,
+          ...where,
+          name: `${kind === 'casa' ? 'Casa' : 'Local comercial'} frente a ${front.name}, ${manzanaName(r, c)}`,
           barrio,
           price: kind === 'casa' ? base : base * 2,
           cell: { row: r, col: c },
           manzanaId: manzanaId(r, c),
         });
-      }
+      });
     }
   }
   return lots;
@@ -108,3 +133,6 @@ export const lotsOfBarrio = (lots: Lot[], barrio: number) => lots.filter((l) => 
 
 /** Todos los sitios de una manzana. */
 export const lotsOfManzana = (lots: Lot[], manzanaId: string) => lots.filter((l) => l.manzanaId === manzanaId);
+
+/** Sitios que dan a una calle (a sus dos lados). */
+export const lotsFacingStreet = (lots: Lot[], streetId: string) => lots.filter((l) => l.frontStreetId === streetId);

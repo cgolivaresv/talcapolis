@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { lerpPositionM, type Board, type Intersection, type Segment } from '../engine/board';
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
-import type { Lot } from '../engine/lots';
+import type { Lot, Side } from '../engine/lots';
 import { directionOf } from '../engine/traffic';
 
 /** Color de cada barrio (índice = id del barrio), como en el Monopoly clásico. */
@@ -155,26 +155,31 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
           Las calles parciales (1½ Norte, etc.) cruzan por encima. */}
       {fullRows.slice(0, -1).map((r, ri) =>
         fullCols.slice(0, -1).map((c, ci) => {
-          // Sitios que se dibujan dentro de la manzana: casas, locales y edificios que ocupan la manzana.
-          const sites = lots.filter(
-            (l) =>
-              l.cell.row === ri &&
-              l.cell.col === ci &&
-              (l.kind !== 'emblematico' || landmarks.find((m) => m.id === l.landmarkId)?.anchor.type === 'block'),
-          );
+          // Los 4 sitios de la manzana: uno por lado, mirando a la calle que lo rodea.
+          const sites = lots.filter((l) => l.cell.row === ri && l.cell.col === ci);
           const x = px(c.index) + GAP + 6;
           const y = py(r.index) + GAP + 6;
           const w = px(fullCols[ci + 1].index) - px(c.index) - 2 * GAP - 12;
           const h = py(fullRows[ri + 1].index) - py(r.index) - 2 * GAP - 12;
-          const slotW = w / Math.max(sites.length, 1);
+          const cx = x + w / 2;
+          const cy = y + h / 2;
+          // Cada sitio es un triángulo con la base sobre su calle y la punta en el centro.
+          const shape: Record<Side, { pts: string; edge: [number, number, number, number]; mid: [number, number] }> = {
+            N: { pts: `${x},${y} ${x + w},${y} ${cx},${cy}`, edge: [x, y, x + w, y], mid: [cx, y] },
+            E: { pts: `${x + w},${y} ${x + w},${y + h} ${cx},${cy}`, edge: [x + w, y, x + w, y + h], mid: [x + w, cy] },
+            S: { pts: `${x},${y + h} ${x + w},${y + h} ${cx},${cy}`, edge: [x, y + h, x + w, y + h], mid: [cx, y + h] },
+            W: { pts: `${x},${y} ${x},${y + h} ${cx},${cy}`, edge: [x, y, x, y + h], mid: [x, cy] },
+          };
           return (
             <g key={`mz${ri}-${ci}`}>
               <rect x={x} y={y} width={w} height={h} rx="3" fill="#f3f8ee" stroke="#111" strokeWidth="1" />
-              {sites.map((lot, k) => {
-                const sx = x + k * slotW;
+              {sites.map((lot) => {
+                const sh = shape[lot.side];
                 const selected = lot.id === selectedLotId;
                 const lm = lot.landmarkId ? landmarks.find((m) => m.id === lot.landmarkId) : undefined;
                 const icon = lm ? lm.icon : lot.kind === 'local' ? '🏪' : '🏠';
+                const ix = (sh.mid[0] * 2 + cx) / 3;
+                const iy = (sh.mid[1] * 2 + cy) / 3;
                 return (
                   <g
                     key={lot.id}
@@ -185,20 +190,15 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                     }}
                   >
                     <title>{lot.name}</title>
-                    <rect
-                      x={sx}
-                      y={y}
-                      width={slotW}
-                      height={h}
+                    <polygon
+                      points={sh.pts}
                       fill={lm?.id === 'plaza-de-armas' ? '#7ec27e' : lm ? '#fff6d6' : lot.kind === 'local' ? '#fdf1d4' : '#f3f8ee'}
                       stroke="#111"
                       strokeWidth="1"
                     />
-                    <rect x={sx} y={y} width={slotW} height="9" fill={BARRIO_COLORS[lot.barrio]} stroke="#111" strokeWidth="1" />
-                    <text x={sx + slotW / 2} y={y + h / 2 + 10} textAnchor="middle" className="icon-text lot-house">{icon}</text>
-                    {selected && (
-                      <rect x={sx - 1} y={y - 1} width={slotW + 2} height={h + 2} fill="none" stroke="#c4161c" strokeWidth="3" />
-                    )}
+                    <line x1={sh.edge[0]} y1={sh.edge[1]} x2={sh.edge[2]} y2={sh.edge[3]} stroke={BARRIO_COLORS[lot.barrio]} strokeWidth="7" />
+                    <text x={ix} y={iy + 5} textAnchor="middle" className="icon-text lot-house">{icon}</text>
+                    {selected && <polygon points={sh.pts} fill="none" stroke="#c4161c" strokeWidth="3" />}
                   </g>
                 );
               })}

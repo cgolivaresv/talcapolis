@@ -62,7 +62,7 @@ export function baseRentOfLot(price: number): number {
   return Math.max(2, Math.round(price * 0.12));
 }
 
-/** Factor si el dueño tiene los 3 sitios de la manzana. */
+/** Factor si el dueño tiene los 4 sitios de la manzana. */
 export const MANZANA_COMPLETE_FACTOR = 1.5;
 /** Factor si el dueño tiene todo el barrio (se acumula con el de la manzana). */
 export const BARRIO_COMPLETE_FACTOR = 2;
