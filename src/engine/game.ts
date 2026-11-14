@@ -7,6 +7,8 @@ import { GO_TO_JAIL_NODE, START_BONUS, START_NODE, destinations, rollDice, type 
 /** Fianza para salir de la Cárcel tras 3 turnos sin sacar dobles. */
 export const JAIL_FINE = 50;
 export const STARTING_MONEY = 1500;
+export const MIN_PLAYERS = 2;
+export const MAX_PLAYERS = 6;
 
 /** Propuesta de intercambio: el jugador en turno (`from`) ofrece `give` y pide `take` a `to`. */
 export interface Trade {
@@ -44,7 +46,17 @@ export interface Game {
   log: string[];
 }
 
+/** Error de configuración si la cantidad de jugadores o sus nombres no sirven; `null` si están bien. */
+export function validatePlayerNames(names: string[]): string | null {
+  if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) return `Debe haber entre ${MIN_PLAYERS} y ${MAX_PLAYERS} jugadores.`;
+  if (names.some((n) => n.trim() === '')) return 'Todos los jugadores necesitan un nombre.';
+  if (new Set(names.map((n) => n.trim().toLowerCase())).size !== names.length) return 'Los nombres no pueden repetirse.';
+  return null;
+}
+
 export function newGame(names: string[], seed: number): Game {
+  const problem = validatePlayerNames(names);
+  if (problem) throw new Error(problem);
   return {
     players: names.map((id) => ({ id, money: STARTING_MONEY, at: START_NODE, inJail: false, freeJailCards: 0, ownedLotIds: [] })),
     current: 0,

@@ -17,7 +17,7 @@ Cada **tramo de calle entre dos intersecciones** es una casilla del recorrido: 1
 
 ## Movimiento
 
-Cada jugador parte en la SALIDA (Estación). En su turno tira **dos dados** y avanza exactamente esa cantidad de **tramos de calle** (de intersección en intersección), respetando el **sentido del tránsito**. No se da media vuelta salvo que no haya otra salida. En cada intersección con varias salidas el jugador no elige paso a paso: el tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la Cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno); las casillas "?" sacan tarjeta. Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
+Se juega de **2 a 6 jugadores** (nombres a elección, sin repetirse). Cada uno parte en la SALIDA (Estación). En su turno tira **dos dados** y avanza exactamente esa cantidad de **tramos de calle** (de intersección en intersección), respetando el **sentido del tránsito**. No se da media vuelta salvo que no haya otra salida. En cada intersección con varias salidas el jugador no elige paso a paso: el tablero marca todos los destinos posibles y se toca el que se quiere. Al pasar por la SALIDA se cobra $200; los dobles dan otro turno; "A la Cárcel" manda preso (se sale con dobles, tarjeta de libertad o pagando $50 al tercer turno); las casillas "?" sacan tarjeta. Todo está en `src/engine/movement.ts` y `src/engine/game.ts`.
 
 ## Compra y arriendo
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildBoard } from './board';
 import { lotsAround, rentOf, rentsDue } from './economy';
-import { acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, type Game } from './game';
+import { MAX_PLAYERS, acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, validatePlayerNames, type Game } from './game';
 import { placeLandmarks } from './landmarks';
 import { buildLots } from './lots';
 
@@ -99,5 +99,24 @@ describe('intercambios', () => {
     expect(proposeTrade(base(), { ...offer, giveMoney: 5000 }).trade).toBeNull();
     expect(proposeTrade(base(), { ...offer, giveLots: [], giveMoney: 0, takeLots: [] }).trade).toBeNull();
     expect(proposeTrade(base(), { ...offer, from: 1, to: 0 }).trade).toBeNull(); // no es su turno
+  });
+});
+
+describe('jugadores', () => {
+  it('se permiten de 2 a 6 jugadores con nombres distintos', () => {
+    expect(MAX_PLAYERS).toBe(6);
+    expect(validatePlayerNames(['A', 'B'])).toBeNull();
+    expect(validatePlayerNames(['A', 'B', 'C', 'D', 'E', 'F'])).toBeNull();
+    expect(validatePlayerNames(['A'])).not.toBeNull();
+    expect(validatePlayerNames(['A', 'B', 'C', 'D', 'E', 'F', 'G'])).not.toBeNull();
+    expect(validatePlayerNames(['A', ' a '])).not.toBeNull();
+    expect(validatePlayerNames(['A', ' '])).not.toBeNull();
+    expect(() => newGame(['A'], 1)).toThrow();
+  });
+
+  it('una partida de 6 funciona y todos parten en la salida', () => {
+    const g = newGame(['A', 'B', 'C', 'D', 'E', 'F'], 9);
+    expect(g.players).toHaveLength(6);
+    expect(new Set(g.players.map((p) => p.at)).size).toBe(1);
   });
 });

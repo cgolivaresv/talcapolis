@@ -3,7 +3,7 @@ import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
 import { cardSquaresOf } from './engine/cards';
-import { acceptTrade, buy, moveTo, newGame, proposeTrade, rejectTrade, roll, skipBuy } from './engine/game';
+import { MAX_PLAYERS, MIN_PLAYERS, acceptTrade, buy, validatePlayerNames, moveTo, newGame, proposeTrade, rejectTrade, roll, skipBuy } from './engine/game';
 import { placeLandmarks } from './engine/landmarks';
 import { buildLots, lotsOfBarrio, lotsOfManzana, type Lot } from './engine/lots';
 import {
@@ -19,12 +19,11 @@ import { BARRIO_COLORS, BoardView } from './ui/BoardView';
 import { TradePanel } from './ui/TradePanel';
 import './App.css';
 
-const PLAYER_NAMES = ['Jugador 1', 'Jugador 2', 'Jugador 3'];
-const PLAYER_COLORS = ['#e8423a', '#2f7fd6', '#f2b90c'];
+const PLAYER_COLORS = ['#e8423a', '#2f7fd6', '#f2b90c', '#2e9e5b', '#8e44ad', '#555555'];
 
 const KIND_LABEL = { casa: 'Casa', local: 'Local comercial', emblematico: 'Edificio emblemático' } as const;
 
-export default function App() {
+function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit: () => void }) {
   const board = useMemo(() => buildBoard(), []);
   const landmarks = useMemo(() => placeLandmarks(board), [board]);
   const lots = useMemo(() => buildLots(board, landmarks), [board, landmarks]);
@@ -35,7 +34,7 @@ export default function App() {
   const [zoom, setZoom] = useState(0.75);
   const changeZoom = (delta: number) => setZoom((z) => Math.min(1.5, Math.max(0.3, +(z + delta).toFixed(2))));
 
-  const [game, setGame] = useState(() => newGame(PLAYER_NAMES, 2026));
+  const [game, setGame] = useState(() => newGame(names, seed));
   const ctx = useMemo(() => ({ board, landmarks, lots, cardSquares }), [board, landmarks, lots, cardSquares]);
   const options = useMemo(() => new Set(game.options.map((d) => d.node)), [game.options]);
   const turnOf = game.players[game.current];
@@ -44,6 +43,7 @@ export default function App() {
     [game.owners],
   );
   const [trading, setTrading] = useState(false);
+  const [confirmExit, setConfirmExit] = useState(false);
   const lotName = (id: string) => lots.find((l) => l.id === id)?.name.split(',')[0] ?? id;
   const tradeSide = (ids: string[], money: number) =>
     [...ids.map(lotName), ...(money ? [`${money}`] : [])].join(' + ') || 'nada';
@@ -96,7 +96,7 @@ export default function App() {
               selectedId={street?.id ?? null}
               selectedLotId={lot?.id ?? null}
               cardSquares={cardSquares}
-              tokens={game.players.map((p, k) => ({ id: p.id, at: p.at, color: PLAYER_COLORS[k], active: k === game.current }))}
+              tokens={game.players.map((p, k) => ({ id: p.id, label: p.id.trim().charAt(0).toUpperCase(), at: p.at, color: PLAYER_COLORS[k], active: k === game.current }))}
               options={options}
               ownerColors={ownerColors}
               onPickNode={(node) => setGame((g) => moveTo(g, node, ctx))}
@@ -273,6 +273,10 @@ export default function App() {
       </div>
 
       <footer className="credits">
+        <button type="button" className="new-game" onClick={() => (confirmExit ? onExit() : setConfirmExit(true))} onBlur={() => setConfirmExit(false)}>
+          {confirmExit ? '¿Seguro? Se pierde la partida' : 'Nueva partida'}
+        </button>
+        <br />
         Distancias entre calles medidas sobre datos de{' '}
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
           © colaboradores de OpenStreetMap
@@ -281,4 +285,61 @@ export default function App() {
       </footer>
     </main>
   );
+}
+
+/** Pantalla inicial: cantidad de jugadores y nombres. */
+function Setup({ onStart }: { onStart: (names: string[]) => void }) {
+  const [count, setCount] = useState(3);
+  const [names, setNames] = useState(() => Array.from({ length: MAX_PLAYERS }, (_, k) => `Jugador ${k + 1}`));
+  const chosen = names.slice(0, count).map((n) => n.trim());
+  const problem = validatePlayerNames(chosen);
+
+  return (
+    <main className="app">
+      <header className="banner">
+        <h1>TALCAPOLIS</h1>
+        <p>El juego de comprar y vender Talca</p>
+      </header>
+      <form
+        className="setup"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!problem) onStart(chosen);
+        }}
+      >
+        <h2>Nueva partida</h2>
+        <div className="setup-count" role="group" aria-label="Cantidad de jugadores">
+          {Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, k) => k + MIN_PLAYERS).map((n) => (
+            <button key={n} type="button" className={n === count ? 'on' : undefined} aria-pressed={n === count} onClick={() => setCount(n)}>
+              {n}
+            </button>
+          ))}
+          <span>jugadores</span>
+        </div>
+        <ul className="setup-names">
+          {names.slice(0, count).map((n, k) => (
+            <li key={k}>
+              <span style={{ color: PLAYER_COLORS[k] }}>●</span>
+              <input
+                value={n}
+                maxLength={16}
+                aria-label={`Nombre del jugador ${k + 1}`}
+                onChange={(e) => setNames((all) => all.map((x, j) => (j === k ? e.target.value : x)))}
+              />
+            </li>
+          ))}
+        </ul>
+        {problem && <p className="setup-error">{problem}</p>}
+        <button type="submit" className="roll-btn" disabled={!!problem}>
+          Empezar
+        </button>
+      </form>
+    </main>
+  );
+}
+
+export default function App() {
+  const [match, setMatch] = useState<{ names: string[]; seed: number } | null>(null);
+  if (!match) return <Setup onStart={(names) => setMatch({ names, seed: Math.floor(Math.random() * 2 ** 31) })} />;
+  return <Match key={match.seed} names={match.names} seed={match.seed} onExit={() => setMatch(null)} />;
 }

@@ -35,7 +35,7 @@ interface Props {
   cardSquares: Set<string>;
   onCardSquare?: (nodeId: string) => void;
   /** Fichas de los jugadores. */
-  tokens?: { id: string; at: string; color: string; active: boolean }[];
+  tokens?: { id: string; label: string; at: string; color: string; active: boolean }[];
   /** Intersecciones a las que puede llegar el jugador en turno. */
   options?: Set<string>;
   onPickNode?: (nodeId: string) => void;
@@ -377,7 +377,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         return (
           <g key={`tok-${k}`} pointerEvents="none" data-active-token={t.active ? '' : undefined}>
             <circle cx={x} cy={y} r={t.active ? 9 : 7.5} fill={t.color} stroke={t.active ? '#c4161c' : '#111'} strokeWidth={t.active ? 3 : 2} />
-            <text x={x} y={y + 3.5} textAnchor="middle" className="token-text">{t.id.slice(-1)}</text>
+            <text x={x} y={y + 3.5} textAnchor="middle" className="token-text">{t.label}</text>
           </g>
         );
       })}
