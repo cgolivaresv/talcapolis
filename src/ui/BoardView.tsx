@@ -3,6 +3,7 @@ import { lerpPositionM, type Board, type Intersection, type Segment } from '../e
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
 import type { Lot, Side } from '../engine/lots';
 import { directionOf } from '../engine/traffic';
+import { GLYPH_URL, glyphOfLandmark, glyphOfLot, type Glyph } from './glyphs';
 
 /** Color de cada barrio (índice = id del barrio), según los grupos de la guía de estilo Esmeralda y Cobre. */
 export const BARRIO_COLORS = [
@@ -23,6 +24,11 @@ const CREAM = '#f5f1e8'; // crema alabastro
 const LANDMARK_FILL = '#eadfc4';
 const PLAZA_FILL = '#7fa592';
 const GOLD = '#d4af37'; // oro champagne
+
+/** Dibuja un gráfico de la biblioteca SVG; no captura clics (los recibe el elemento que lo contiene). */
+function GlyphImage({ glyph, x, y, size }: { glyph: Glyph; x: number; y: number; size: number }) {
+  return <image href={GLYPH_URL[glyph]} x={x} y={y} width={size} height={size} pointerEvents="none" />;
+}
 
 const K = 1.1; // píxeles por metro real (las calles intermedias están a ~65 m)
 const LEFT = 136;
@@ -192,7 +198,6 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                 const sh = shape[lot.side];
                 const selected = lot.id === selectedLotId;
                 const lm = lot.landmarkId ? landmarks.find((m) => m.id === lot.landmarkId) : undefined;
-                const icon = lm ? lm.icon : lot.kind === 'local' ? '🏪' : '🏠';
                 const ix = (sh.mid[0] * 2 + cx) / 3;
                 const iy = (sh.mid[1] * 2 + cy) / 3;
                 return (
@@ -213,9 +218,9 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                     />
                     <line x1={sh.edge[0]} y1={sh.edge[1]} x2={sh.edge[2]} y2={sh.edge[3]} stroke={BARRIO_COLORS[lot.barrio]} strokeWidth="7" />
                     {ownerColors[lot.id] && (
-                      <circle cx={ix} cy={iy - 9} r="5" fill={ownerColors[lot.id]} stroke={INK} strokeWidth="1.5" />
+                      <circle cx={ix + 13} cy={iy - 11} r="5" fill={ownerColors[lot.id]} stroke={INK} strokeWidth="1.5" />
                     )}
-                    <text x={ix} y={iy + 5} textAnchor="middle" className="icon-text lot-house">{icon}</text>
+                    <GlyphImage glyph={glyphOfLot(lot)} x={ix - 12} y={iy - 11} size={25} />
                     {selected && <polygon points={sh.pts} fill="none" stroke={GOLD} strokeWidth="3.5" />}
                   </g>
                 );
@@ -274,7 +279,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
         const cx = px(n.y);
         const cy = py(n.x);
         const size = corner ? CORNER : NODE;
-        const line2 = corner ? corner[1] || lm?.icon || '' : '';
+        const line2 = corner ? corner[1] : '';
         if (cardSquares.has(n.id)) {
           return (
             <g
@@ -286,8 +291,8 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
               }}
             >
               <title>Tarjeta ?</title>
-              <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx="4" fill="#c68b66" stroke={INK} strokeWidth="2" />
-              <text x={cx} y={cy + 8} textAnchor="middle" className="card-mark">?</text>
+              <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx="4" fill={INK} stroke={COPPER} strokeWidth="2.5" />
+              <GlyphImage glyph="luck" x={cx - size / 2 + 3} y={cy - size / 2 + 3} size={size - 6} />
             </g>
           );
         }
@@ -309,10 +314,14 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
             {corner ? (
               <>
                 <text x={cx} y={cy - 4} textAnchor="middle" className="corner-text">{corner[0]}</text>
-                <text x={cx} y={cy + 13} textAnchor="middle" className={line2.length <= 2 ? 'icon-text' : 'corner-text'}>{line2}</text>
+                {lm ? (
+                  <GlyphImage glyph={glyphOfLandmark(lm.id)} x={cx - 11} y={cy + 1} size={24} />
+                ) : (
+                  <text x={cx} y={cy + 13} textAnchor="middle" className={line2.length <= 2 ? 'icon-text' : 'corner-text'}>{line2}</text>
+                )}
               </>
             ) : lm ? (
-              <text x={cx} y={cy + 7} textAnchor="middle" className="icon-text">{lm.icon}</text>
+              <GlyphImage glyph={glyphOfLandmark(lm.id)} x={cx - 11} y={cy - 9} size={22} />
             ) : (
               <circle cx={cx} cy={cy} r="3" fill={INK} />
             )}
@@ -344,9 +353,7 @@ export function BoardView({ board, landmarks, lots, selectedId, selectedLotId, c
                 strokeWidth={selected ? 3 : 1.5}
               />
               <rect x={cx - halfW} y={cy - halfH} width={halfW * 2} height={wholeBlock ? 11 : 6} fill={barrioColorOf(l)} stroke={INK} strokeWidth="1" />
-              <text x={cx} y={cy + (wholeBlock ? 12 : 8)} textAnchor="middle" className={wholeBlock ? 'icon-text icon-big' : 'icon-text'}>
-                {l.icon}
-              </text>
+              <GlyphImage glyph={glyphOfLandmark(l.id)} x={cx - 12} y={cy - 9} size={24} />
               {selected && (
                 <rect x={cx - halfW - 2} y={cy - halfH - 2} width={halfW * 2 + 4} height={halfH * 2 + 4} rx="5" fill="none" stroke={GOLD} strokeWidth="3.5" />
               )}

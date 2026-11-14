@@ -277,7 +277,7 @@
 }
 
 .card-square:hover rect {
-  fill: #d9a582;
+  fill: #3a4246;
 }
 
 .card-mark {
@@ -675,4 +675,14 @@
 
 .players li.active {
   background: #ead9b0;
+}
+
+.deed-glyph {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 2px;
+  padding: 4px;
+  background: #f5f1e8;
+  border: 2px solid #c68b66;
+  border-radius: 50%;
 }

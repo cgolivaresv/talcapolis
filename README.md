@@ -60,3 +60,5 @@ Antes de tirar los dados, el jugador en turno puede proponer un intercambio a ot
 ## Estilo gráfico
 
 Paleta y tipografías del set «Edición Arquitectónica Talca» (Esmeralda Mate `#144E3A`, Cobre Cepillado `#C68B66`, Crema Alabastro `#F5F1E8`, Pizarra Carbón `#222629`, Oro Champagne `#D4AF37`), con Montserrat (títulos) e Inter (texto), servidas desde el propio proyecto (`@fontsource`). Los 8 colores de barrio siguen los grupos de la guía de estilo. Los tokens están en `src/index.css` y los colores del tablero en `src/ui/BoardView.tsx`.
+
+Los gráficos SVG (casa, mercado, catedral, plaza, teatro, tren, banco, estrella de tarjetas) están en `src/assets/graficos/` y se asignan en `src/ui/glyphs.ts`: casa para las casas, mercado para los locales comerciales y uno por edificio emblemático. `service-electricity.svg`, `service-water.svg` y `hotel.svg` (usado para universidades y liceos) quedan disponibles; los servicios aún no existen en el juego.

@@ -16,6 +16,7 @@ import {
 } from './engine/properties';
 import { directionOf } from './engine/traffic';
 import { BARRIO_COLORS, BoardView } from './ui/BoardView';
+import { GLYPH_URL, glyphOfLot } from './ui/glyphs';
 import { TradePanel } from './ui/TradePanel';
 import './App.css';
 
@@ -198,6 +199,7 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
             {lot && barrio ? (
               <>
                 <div className="deed-band">
+                  <img className="deed-glyph" src={GLYPH_URL[glyphOfLot(lot)]} alt="" />
                   <span>
                     {lot.kind === 'emblematico' && lm
                       ? `EDIFICIO EMBLEMÁTICO · ${LANDMARK_KIND_LABEL[LANDMARK_INFO[lm.id].kind].toUpperCase()}`
