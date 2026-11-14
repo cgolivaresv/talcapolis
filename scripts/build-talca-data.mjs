@@ -1,20 +1,21 @@
 /**
- * Genera src/data/talca-layout.json a partir de OpenStreetMap (Overpass API):
- *   - posición real de cada intersección del tablero (metros, x = oriente, y = norte)
- *   - sentido del tránsito de cada tramo (both | forward | backward), donde
- *     "forward" significa de `from` a `to` del tramo.
+ * Genera src/data/talca-traffic.json a partir de OpenStreetMap (Overpass API):
+ *   - sentido del tránsito de cada tramo del tablero (both | forward | backward), donde
+ *     "forward" significa de `from` a `to` del tramo. En calles de doble calzada
+ *     (p. ej. la Alameda) se unen los sentidos de ambas calzadas.
+ * Las posiciones reales de las calles están en src/engine/geometry.ts.
  *
  * Uso:  node scripts/build-talca-data.mjs [ruta-a-osm.json]
- * Sin argumento descarga los datos de Overpass. Requiere Node 22.6+ (importa board.ts).
+ * Sin argumento descarga los datos de Overpass.
  * Datos © colaboradores de OpenStreetMap (ODbL).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildBoard } from '../src/engine/board.ts';
+import { createServer } from 'vite';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const OUT = path.join(here, '../src/data/talca-layout.json');
+const OUT = path.join(here, '../src/data/talca-traffic.json');
 
 const LAT0 = -35.4264;
 const LON0 = -71.6555;
@@ -57,8 +58,9 @@ function streetKey(tags) {
     for (const [re, key] of NAME_ALIASES) if (re.test(n) && !/Pasaje|Pje/i.test(n)) return key;
   }
   for (const n of all) {
-    const m = n.match(/(?:^|\s)(\d+)\s+(Norte|Sur|Oriente|Poniente)\b/i);
-    if (m) return `${m[1]} ${m[2][0].toUpperCase()}${m[2].slice(1).toLowerCase()}`;
+    // Admite calles intermedias: "9½ Oriente", "1 y Medio Norte", "10 1/2 Sur".
+    const m = n.match(/(?:^|\s)(\d+)\s*(½|y\s+medio|1\/2)?\s+(Norte|Sur|Oriente|Poniente)\b/i);
+    if (m) return `${m[1]}${m[2] ? '½' : ''} ${m[3][0].toUpperCase()}${m[3].slice(1).toLowerCase()}`;
   }
   return null;
 }
@@ -124,7 +126,10 @@ for (const w of osm.elements) {
   byKey.get(key).push({ id: w.id, oneway: w.tags.oneway ?? 'no', pts: w.geometry.map(toM) });
 }
 
-const board = buildBoard();
+/** Usa el buildBoard real (TypeScript) cargándolo con Vite, para que nunca se desfase del tablero. */
+const vite = await createServer({ root: path.join(here, ".."), logLevel: "silent", server: { middlewareMode: true }, appType: "custom" });
+const board = (await vite.ssrLoadModule("/src/engine/board.ts")).buildBoard();
+await vite.close();
 const diag = { missingStreets: [], missingIntersections: [], ambiguous: [], noWayForSegment: [] };
 const positions = {};
 
@@ -158,7 +163,7 @@ for (const seg of board.segments) {
       const d = dist(M, q);
       if (!best || d < best.d) best = { d, v: { x: w.pts[i + 1].x - w.pts[i].x, y: w.pts[i + 1].y - w.pts[i].y } };
     }
-    if (!best || best.d > 45) continue;
+    if (!best || best.d > 70) continue;
     found++;
     const ow = String(w.oneway).toLowerCase();
     if (ow === 'yes' || ow === 'true' || ow === '1' || ow === '-1' || ow === 'reverse') {
@@ -183,11 +188,9 @@ fs.writeFileSync(
       source: 'OpenStreetMap (Overpass API)',
       license: 'ODbL, © colaboradores de OpenStreetMap',
       origin: { lat: LAT0, lon: LON0 },
-      units: 'metros; x = oriente, y = norte',
       generatedAt: new Date().toISOString().slice(0, 10),
-      directionNote: "forward = de 'from' a 'to' del tramo",
+      directionNote: "both = doble sentido; forward = de 'from' a 'to' del tramo; backward = de 'to' a 'from'",
     },
-    intersections: positions,
     directions,
   }, null, 1),
 );

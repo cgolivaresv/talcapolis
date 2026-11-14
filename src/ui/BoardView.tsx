@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Board, Intersection, Segment, Street } from '../engine/board';
 import { STREET_ALIASES, type PlacedLandmark } from '../engine/landmarks';
+import { directionOf } from '../engine/traffic';
 
 /** Colores de los grupos, como en el Monopoly clásico. */
 export const GROUP_COLORS = [
@@ -14,7 +15,7 @@ export const GROUP_COLORS = [
   '#0072bb', // azul
 ] as const;
 
-const K = 0.7; // píxeles por metro real
+const K = 1.1; // píxeles por metro real (las calles intermedias están a ~65 m)
 const LEFT = 118;
 const TOP = 70;
 const TILE = 26; // grosor de la ficha
@@ -27,6 +28,8 @@ interface Props {
   landmarks: PlacedLandmark[];
   selectedId: string | null;
   selectedLandmarkId: string | null;
+  /** Factor de zoom sobre el tamaño natural del tablero (1 = 1 px por unidad del dibujo). */
+  zoom: number;
   onSelect: (segment: Segment | null) => void;
   onSelectLandmark: (landmark: PlacedLandmark) => void;
 }
@@ -45,7 +48,7 @@ function lerpM(streets: Street[], f: number): number {
   return a + (b - a) * t;
 }
 
-export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, onSelect, onSelectLandmark }: Props) {
+export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, zoom, onSelect, onSelectLandmark }: Props) {
   const rows = board.verticalStreets.length;
   const cols = board.horizontalStreets.length;
   // Las distancias entre calles son las reales (geometry.ts), a escala K px/m.
@@ -85,12 +88,61 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, on
     return { x: Math.min(x1, x2) + GAP, y: y1 - TILE / 2, w: Math.abs(x2 - x1) - 2 * GAP, h: TILE };
   };
 
+  /** Flecha apuntando hacia (ux,uy), centrada en (cx,cy). */
+  const arrow = (cx: number, cy: number, ux: number, uy: number, len: number, wid: number, fill: string) => {
+    const px_ = -uy;
+    const py_ = ux;
+    const tip = [cx + (ux * len) / 2, cy + (uy * len) / 2];
+    const bx = cx - (ux * len) / 2;
+    const by = cy - (uy * len) / 2;
+    const pts = `${tip[0]},${tip[1]} ${bx + (px_ * wid) / 2},${by + (py_ * wid) / 2} ${bx - (px_ * wid) / 2},${by - (py_ * wid) / 2}`;
+    return <polygon points={pts} fill={fill} />;
+  };
+
+  /** Sentido del tránsito: flecha negra = sentido único; dos flechas grises = doble sentido. */
+  const trafficMarker = (seg: Segment, t: { x: number; y: number; w: number; h: number }) => {
+    const dir = directionOf(seg);
+    const a = byId.get(seg.from) as Intersection;
+    const b = byId.get(seg.to) as Intersection;
+    let ux = px(b.y) - px(a.y);
+    let uy = py(b.x) - py(a.x);
+    const l = Math.hypot(ux, uy) || 1;
+    ux /= l;
+    uy /= l;
+    const vertical = t.w === TILE; // la franja de color ocupa los primeros 10 px del tramo
+    const cx = vertical ? t.x + TILE / 2 : t.x + 10 + (t.w - 10) / 2;
+    const cy = vertical ? t.y + 10 + (t.h - 10) / 2 : t.y + TILE / 2;
+    const len = Math.max(8, Math.min(16, (vertical ? t.h : t.w) - 10 - 8));
+    if (dir === 'both') {
+      const ox = vertical ? 4.5 : 0;
+      const oy = vertical ? 0 : 4.5;
+      return (
+        <g pointerEvents="none">
+          {arrow(cx - ox, cy - oy, ux, uy, len * 0.75, 6, '#8a8a8a')}
+          {arrow(cx + ox, cy + oy, -ux, -uy, len * 0.75, 6, '#8a8a8a')}
+        </g>
+      );
+    }
+    const s = dir === 'forward' ? 1 : -1;
+    return <g pointerEvents="none">{arrow(cx, cy, ux * s, uy * s, len, 11, '#111')}</g>;
+  };
+
+  /** Texto del tooltip: "sentido único hacia 3 Oriente" / "doble sentido". */
+  const trafficLabel = (seg: Segment) => {
+    const dir = directionOf(seg);
+    if (dir === 'both') return 'doble sentido';
+    const target = byId.get(dir === 'forward' ? seg.to : seg.from) as Intersection;
+    const cross = seg.street.orientation === 'horizontal' ? target.vertical : target.horizontal;
+    return `sentido único hacia ${cross.name}`;
+  };
+
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label="Tablero de Talcapolis"
       className="board"
+      style={{ width: width * zoom }}
       onClick={() => onSelect(null)}
     >
       <rect x="4" y="4" width={width - 8} height={height - 8} rx="10" fill="#cde6d0" stroke="#111" strokeWidth="4" />
@@ -143,7 +195,7 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, on
               onSelect(seg);
             }}
           >
-            <title>{seg.name}</title>
+            <title>{`${seg.name} (${trafficLabel(seg)})`}</title>
             <rect x={t.x} y={t.y} width={t.w} height={t.h} fill="#fbf7e8" stroke="#111" strokeWidth="1.5" />
             {/* Franja de color, como en las propiedades del Monopoly */}
             {t.w === TILE ? (
@@ -151,6 +203,7 @@ export function BoardView({ board, landmarks, selectedId, selectedLandmarkId, on
             ) : (
               <rect x={t.x + 1} y={t.y + 1} width={9} height={TILE - 2} fill={GROUP_COLORS[seg.street.group]} stroke="#111" strokeWidth="0.8" />
             )}
+            {trafficMarker(seg, t)}
             {selected && (
               <rect x={t.x - 2} y={t.y - 2} width={t.w + 4} height={t.h + 4} fill="none" stroke="#c4161c" strokeWidth="3" />
             )}

@@ -11,6 +11,8 @@ export default function App() {
   const landmarks = useMemo(() => placeLandmarks(board), [board]);
   const [selected, setSelected] = useState<Segment | null>(null);
   const [selectedLandmark, setSelectedLandmark] = useState<PlacedLandmark | null>(null);
+  const [zoom, setZoom] = useState(0.55);
+  const changeZoom = (delta: number) => setZoom((z) => Math.min(1.5, Math.max(0.3, +(z + delta).toFixed(2))));
 
   const selectSegment = (s: Segment | null) => {
     setSelected(s);
@@ -29,14 +31,24 @@ export default function App() {
       </header>
 
       <div className="layout">
-        <BoardView
-          board={board}
-          landmarks={landmarks}
-          selectedId={selected?.id ?? null}
-          selectedLandmarkId={selectedLandmark?.id ?? null}
-          onSelect={selectSegment}
-          onSelectLandmark={selectLandmark}
-        />
+        <div className="board-panel">
+          <div className="zoom-bar" role="group" aria-label="Zoom del tablero">
+            <button type="button" onClick={() => changeZoom(-0.1)} aria-label="Alejar">−</button>
+            <span>{Math.round(zoom * 100)}%</span>
+            <button type="button" onClick={() => changeZoom(0.1)} aria-label="Acercar">+</button>
+          </div>
+          <div className="board-scroll">
+            <BoardView
+              board={board}
+              landmarks={landmarks}
+              selectedId={selected?.id ?? null}
+              selectedLandmarkId={selectedLandmark?.id ?? null}
+              zoom={zoom}
+              onSelect={selectSegment}
+              onSelectLandmark={selectLandmark}
+            />
+          </div>
+        </div>
 
         <aside className="deed" aria-live="polite">
           {selectedLandmark ? (

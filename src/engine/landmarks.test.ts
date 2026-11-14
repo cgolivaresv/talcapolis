@@ -18,8 +18,8 @@ describe('landmarks', () => {
     const placed = placeLandmarks(board);
     const estacion = placed.find((l) => l.id === 'estacion')!;
     const corte = placed.find((l) => l.id === 'corte-apelaciones')!;
-    expect([estacion.row, estacion.col]).toEqual([12, 0]);
-    expect([corte.row, corte.col]).toEqual([0, 5]);
+    expect([estacion.row, estacion.col]).toEqual([board.verticalStreets.length - 1, 0]);
+    expect([corte.row, corte.col]).toEqual([0, board.horizontalStreets.length - 1]);
   });
 
   it('la Plaza de Armas queda en el centro de su manzana', () => {

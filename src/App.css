@@ -37,8 +37,42 @@
   justify-content: center;
 }
 
+.board-panel {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.zoom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.zoom-bar button {
+  width: 36px;
+  height: 36px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: 2px solid #111;
+  border-radius: 6px;
+  background: #fef200;
+  cursor: pointer;
+}
+
+.board-scroll {
+  max-height: 80vh;
+  max-width: 100%;
+  overflow: auto;
+  border-radius: 10px;
+}
+
 .board {
-  width: min(100%, 520px);
+  display: block;
+  max-width: none;
   height: auto;
   background: #fff;
   border-radius: 10px;

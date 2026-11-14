@@ -1,10 +1,11 @@
 /**
- * Posición real de cada calle del tablero, en metros desde su borde (2 Poniente / 2 Sur),
- * medida a lo largo de su eje: Poniente->Oriente para las calles Oriente/Poniente y
- * Sur->Norte para las calles Norte/Sur.
+ * Geometría real del tablero, medida sobre OpenStreetMap.
  *
- * Derivado de las intersecciones reales (nodos compartidos) de OpenStreetMap, con la
- * grilla girada 4.4° para quitarle la inclinación de la ciudad.
+ * Las posiciones están en metros desde el borde del tablero (2 Poniente / 2 Sur), a lo largo
+ * del eje de cada calle: Poniente->Oriente para las calles Oriente/Poniente y Sur->Norte para
+ * las calles Norte/Sur. Se calcularon con las intersecciones reales (nodos compartidos) y la
+ * grilla girada 4,4° para quitarle la inclinación de la ciudad.
+ *
  * Datos (c) colaboradores de OpenStreetMap, licencia ODbL: https://www.openstreetmap.org/copyright
  */
 export const STREET_POSITIONS_M: Record<string, number> = {
@@ -28,3 +29,23 @@ export const STREET_POSITIONS_M: Record<string, number> = {
   '3-norte': 529,
   '4-norte': 710,
 };
+
+/**
+ * Calles intermedias ("1½ Norte", etc.). Son parciales: solo existen entre las dos calles
+ * indicadas en `spans` (inclusive), y solo se cruzan con las calles que caen en ese tramo.
+ * Se incluyeron únicamente las que tienen intersecciones reales dentro del tablero.
+ */
+export interface ExtraStreet {
+  id: string;
+  name: string;
+  orientation: 'vertical' | 'horizontal';
+  positionM: number;
+  /** Ids de las dos calles del eje transversal entre las que existe. */
+  spans: [string, string];
+}
+
+export const EXTRA_STREETS: ExtraStreet[] = [
+  { id: '1.5-norte', name: '1½ Norte', orientation: 'horizontal', positionM: 319, spans: ['5-oriente', '6-oriente'] },
+  { id: '3.5-norte', name: '3½ Norte', orientation: 'horizontal', positionM: 575, spans: ['7-oriente', '11-oriente'] },
+  { id: '9.5-oriente', name: '9½ Oriente', orientation: 'vertical', positionM: 1362, spans: ['3-norte', '4-norte'] },
+];

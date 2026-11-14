@@ -1,4 +1,4 @@
-import { STREET_POSITIONS_M } from './geometry';
+import { EXTRA_STREETS, STREET_POSITIONS_M } from './geometry';
 
 /**
  * Modelo del tablero de Talcapolis.
@@ -45,6 +45,8 @@ export interface Street {
   group: number;
   /** Posición real en metros desde el borde del tablero (ver geometry.ts). */
   positionM: number;
+  /** Solo para calles parciales: tramo (en metros, eje transversal) donde la calle existe. */
+  spanM?: [number, number];
 }
 
 /** Distancia típica entre calles (m), usada si una calle no tiene posición medida. */
@@ -54,8 +56,8 @@ export const GROUP_COUNT = 8;
 
 export interface Intersection {
   id: string;
-  x: number; // índice de columna (0 = calle más al poniente)
-  y: number; // índice de fila (0 = calle más al sur)
+  x: number; // índice de la calle Oriente/Poniente (0 = la más al poniente)
+  y: number; // índice de la calle Norte/Sur (0 = la más al sur)
   vertical: Street;
   horizontal: Street;
 }
@@ -112,33 +114,58 @@ export function buildBoard(config: BoardConfig = TALCAPOLIS_CONFIG): Board {
   if (westV >= eastV) throw new Error('El límite poniente debe quedar al poniente del límite oriente');
   if (southV >= northV) throw new Error('El límite sur debe quedar al sur del límite norte');
 
-  const verticalStreets = signedRange(westV, eastV).map((v, i) => verticalStreet(v, i));
-  const horizontalStreets = signedRange(southV, northV).map((v, i) => horizontalStreet(v, i));
+  const baseV = signedRange(westV, eastV).map((v, i) => verticalStreet(v, i));
+  const baseH = signedRange(southV, northV).map((v, i) => horizontalStreet(v, i));
 
-  for (const list of [verticalStreets, horizontalStreets]) {
-    for (const s of list) s.group = Math.floor((s.index * GROUP_COUNT) / list.length);
-  }
+  // Calles intermedias (parciales): solo si las dos calles entre las que existen están en el tablero.
+  const extras = (orientation: Street['orientation'], own: Street[], cross: Street[]): Street[] =>
+    EXTRA_STREETS.filter((e) => e.orientation === orientation).flatMap((e) => {
+      const a = cross.find((s) => s.id === e.spans[0]);
+      const b = cross.find((s) => s.id === e.spans[1]);
+      // Debe caer dentro de los límites del tablero en su propio eje.
+      const inside = e.positionM >= own[0].positionM && e.positionM <= own[own.length - 1].positionM;
+      if (!a || !b || !inside) return [];
+      return [{
+        id: e.id,
+        name: e.name,
+        orientation,
+        index: 0,
+        group: 0,
+        positionM: e.positionM,
+        spanM: [Math.min(a.positionM, b.positionM), Math.max(a.positionM, b.positionM)] as [number, number],
+      }];
+    });
+
+  const finish = (list: Street[]) => {
+    list.sort((p, q) => p.positionM - q.positionM);
+    list.forEach((s, i) => {
+      s.index = i;
+      s.group = Math.floor((i * GROUP_COUNT) / list.length);
+    });
+    return list;
+  };
+  const verticalStreets = finish([...baseV, ...extras('vertical', baseV, baseH)]);
+  const horizontalStreets = finish([...baseH, ...extras('horizontal', baseH, baseV)]);
+
+  // Una calle parcial solo existe dentro de su tramo; las enteras cubren todo el tablero.
+  const covers = (s: Street, crossPos: number) =>
+    !s.spanM || (crossPos >= s.spanM[0] - 0.5 && crossPos <= s.spanM[1] + 0.5);
 
   const intersections: Intersection[] = [];
   for (const h of horizontalStreets) {
     for (const v of verticalStreets) {
-      intersections.push({
-        id: `${v.id}/${h.id}`,
-        x: v.index,
-        y: h.index,
-        vertical: v,
-        horizontal: h,
-      });
+      if (!covers(v, h.positionM) || !covers(h, v.positionM)) continue;
+      intersections.push({ id: `${v.id}/${h.id}`, x: v.index, y: h.index, vertical: v, horizontal: h });
     }
   }
-  const at = (x: number, y: number) => intersections[y * verticalStreets.length + x];
 
   const segments: Segment[] = [];
-  // Tramos horizontales: a lo largo de cada calle Norte/Sur, entre calles Oriente/Poniente consecutivas.
+  // Tramos horizontales: a lo largo de cada calle Norte/Sur, entre intersecciones consecutivas.
   for (const h of horizontalStreets) {
-    for (let x = 0; x < verticalStreets.length - 1; x++) {
-      const a = at(x, h.index);
-      const b = at(x + 1, h.index);
+    const along = intersections.filter((i) => i.horizontal === h).sort((p, q) => p.x - q.x);
+    for (let k = 0; k < along.length - 1; k++) {
+      const a = along[k];
+      const b = along[k + 1];
       segments.push({
         id: `${h.id}:${a.vertical.id}-${b.vertical.id}`,
         street: h,
@@ -148,11 +175,12 @@ export function buildBoard(config: BoardConfig = TALCAPOLIS_CONFIG): Board {
       });
     }
   }
-  // Tramos verticales: a lo largo de cada calle Oriente/Poniente, entre calles Norte/Sur consecutivas.
+  // Tramos verticales: a lo largo de cada calle Oriente/Poniente, entre intersecciones consecutivas.
   for (const v of verticalStreets) {
-    for (let y = 0; y < horizontalStreets.length - 1; y++) {
-      const a = at(v.index, y);
-      const b = at(v.index, y + 1);
+    const along = intersections.filter((i) => i.vertical === v).sort((p, q) => p.y - q.y);
+    for (let k = 0; k < along.length - 1; k++) {
+      const a = along[k];
+      const b = along[k + 1];
       segments.push({
         id: `${v.id}:${a.horizontal.id}-${b.horizontal.id}`,
         street: v,
