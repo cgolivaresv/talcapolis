@@ -1,7 +1,11 @@
 .app {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 16px;
+  box-sizing: border-box;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 12px;
+  overflow: hidden;
 }
 
 .banner {
@@ -33,16 +37,18 @@
 }
 
 .layout {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  justify-content: center;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
 }
 
 .board-panel {
-  flex: 0 1 auto;
-  max-width: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .zoom-bar {
@@ -67,7 +73,8 @@
 }
 
 .board-scroll {
-  max-height: 80vh;
+  flex: 1;
+  min-height: 0;
   max-width: 100%;
   overflow: auto;
   border-radius: 10px;
@@ -102,9 +109,8 @@
 }
 
 .deed {
-  position: sticky;
-  top: 16px;
-  width: 240px;
+  box-sizing: border-box;
+  width: auto;
   background: #f5f1e8;
   border: 2px solid #222629;
   box-shadow: 4px 4px 0 #222629;
@@ -192,7 +198,8 @@
 }
 
 .credits {
-  margin-top: 16px;
+  grid-column: 1 / -1;
+  margin-top: 0;
   text-align: center;
   font-size: 0.75rem;
   color: #d8ecd8;
@@ -203,10 +210,19 @@
 }
 
 .side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-auto-rows: max-content;
+  gap: 12px;
+  align-content: start;
+  align-items: start;
+  overflow: auto;
+}
+
+.side > * {
+  max-height: 100%;
+  overflow: auto;
 }
 
 .deed-barrio {
@@ -242,7 +258,8 @@
 }
 
 .barrios {
-  width: 240px;
+  box-sizing: border-box;
+  width: auto;
   background: #f5f1e8;
   border: 2px solid #222629;
   box-shadow: 4px 4px 0 #222629;
@@ -311,7 +328,8 @@
 }
 
 .turn {
-  width: 240px;
+  box-sizing: border-box;
+  width: auto;
   background: #f5f1e8;
   border: 2px solid #222629;
   box-shadow: 4px 4px 0 #222629;
@@ -685,4 +703,102 @@
   background: #f5f1e8;
   border: 2px solid #c68b66;
   border-radius: 50%;
+}
+
+/* --- Pantalla completa sin scroll --- */
+.banner {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 16px;
+  padding: 4px 12px;
+  margin-bottom: 0;
+}
+
+.banner h1 {
+  font-size: 1.4rem;
+  letter-spacing: 6px;
+}
+
+.banner p {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+}
+
+.zoom-bar {
+  margin-bottom: 4px;
+  gap: 8px;
+}
+
+.zoom-bar button {
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+}
+
+.zoom-bar .fit-btn {
+  width: auto;
+  padding: 0 10px;
+  font-size: 0.75rem;
+}
+
+.zoom-bar .fit-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.credits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+  font-size: 0.68rem;
+}
+
+.new-game {
+  margin-bottom: 0;
+}
+
+.deed-band {
+  padding: 6px;
+}
+
+.deed-glyph {
+  width: 36px;
+  height: 36px;
+}
+
+.log {
+  max-height: none;
+}
+
+/* Pantallas angostas: se apila y se permite desplazarse */
+@media (max-width: 899px) {
+  .app {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board-scroll {
+    flex: none;
+    max-height: 90vh;
+  }
+
+  .side,
+  .side > * {
+    overflow: visible;
+  }
+}
+
+/* Con pantalla grande sobra espacio al lado del tablero (que es más alto que ancho): paneles más grandes */
+@media (min-width: 1700px) and (min-height: 950px) {
+  .side {
+    zoom: 1.3;
+  }
 }

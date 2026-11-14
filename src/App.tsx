@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BARRIOS } from './engine/barrios';
 import { buildBoard } from './engine/board';
 import type { Segment } from './engine/board';
@@ -32,8 +32,32 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
 
   const [street, setStreet] = useState<Segment | null>(null);
   const [lot, setLot] = useState<Lot | null>(null);
-  const [zoom, setZoom] = useState(0.75);
-  const changeZoom = (delta: number) => setZoom((z) => Math.min(1.5, Math.max(0.3, +(z + delta).toFixed(2))));
+  // Zoom: por defecto el tablero se ajusta solo al espacio disponible, para que todo quepa sin scroll.
+  const [manualZoom, setManualZoom] = useState<number | null>(null);
+  const [fitZoom, setFitZoom] = useState(0.5);
+  const zoom = manualZoom ?? fitZoom;
+  const changeZoom = (delta: number) => setManualZoom(Math.min(1.5, Math.max(0.2, +(zoom + delta).toFixed(2))));
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const fit = () => {
+      const vb = el.querySelector('svg')?.viewBox.baseVal;
+      if (!vb || !vb.width) return;
+      const stacked = window.innerWidth < 900; // en pantallas angostas el tablero va arriba y se ajusta al ancho
+      const byHeight = el.clientHeight / vb.height;
+      const byWidth = (stacked ? el.clientWidth : window.innerWidth - 700) / vb.width;
+      setFitZoom(Math.max(0.15, +(stacked ? byWidth : Math.min(byHeight, byWidth)).toFixed(3)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    window.addEventListener('resize', fit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', fit);
+    };
+  }, []);
 
   const [game, setGame] = useState(() => newGame(names, seed));
   const ctx = useMemo(() => ({ board, landmarks, lots, cardSquares }), [board, landmarks, lots, cardSquares]);
@@ -47,13 +71,14 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
   const [confirmExit, setConfirmExit] = useState(false);
   const lotName = (id: string) => lots.find((l) => l.id === id)?.name.split(',')[0] ?? id;
   const tradeSide = (ids: string[], money: number) =>
-    [...ids.map(lotName), ...(money ? [`${money}`] : [])].join(' + ') || 'nada';
+    [...ids.map(lotName), ...(money ? [`$${money}`] : [])].join(' + ') || 'nada';
   const buyLots = game.buyOptions.map((id) => lots.find((l) => l.id === id)!);
 
-  // Lleva la vista hasta la ficha del jugador en turno (el tablero es más alto que la pantalla).
+  // Con zoom manual el tablero puede desbordar: se lleva la vista hasta la ficha del jugador en turno.
   useEffect(() => {
+    if (manualZoom === null) return;
     document.querySelector('[data-active-token]')?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
-  }, [game.current, game.players]);
+  }, [manualZoom, game.current, game.players]);
 
   const clearSelection = () => {
     setStreet(null);
@@ -88,8 +113,11 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
             <button type="button" onClick={() => changeZoom(-0.1)} aria-label="Alejar">−</button>
             <span>{Math.round(zoom * 100)}%</span>
             <button type="button" onClick={() => changeZoom(0.1)} aria-label="Acercar">+</button>
+            <button type="button" className="fit-btn" onClick={() => setManualZoom(null)} disabled={manualZoom === null}>
+              Ajustar
+            </button>
           </div>
-          <div className="board-scroll">
+          <div className="board-scroll" ref={scrollRef}>
             <BoardView
               board={board}
               landmarks={landmarks}
@@ -273,20 +301,20 @@ function Match({ names, seed, onExit }: { names: string[]; seed: number; onExit:
             </ul>
             <p className="barrios-note">Cada barrio se define por un lugar real de Talca; sus límites son aproximados.</p>
           </section>
+
+          <footer className="credits">
+            <button type="button" className="new-game" onClick={() => (confirmExit ? onExit() : setConfirmExit(true))} onBlur={() => setConfirmExit(false)}>
+              {confirmExit ? '¿Seguro? Se pierde la partida' : 'Nueva partida'}
+            </button>
+            Distancias entre calles medidas sobre datos de{' '}
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+              © colaboradores de OpenStreetMap
+            </a>{' '}
+            (ODbL).
+          </footer>
         </div>
       </div>
 
-      <footer className="credits">
-        <button type="button" className="new-game" onClick={() => (confirmExit ? onExit() : setConfirmExit(true))} onBlur={() => setConfirmExit(false)}>
-          {confirmExit ? '¿Seguro? Se pierde la partida' : 'Nueva partida'}
-        </button>
-        <br />
-        Distancias entre calles medidas sobre datos de{' '}
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
-          © colaboradores de OpenStreetMap
-        </a>{' '}
-        (ODbL).
-      </footer>
     </main>
   );
 }
